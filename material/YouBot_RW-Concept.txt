@@ -12,6 +12,21 @@
     -Write Button
     -Definition für Stiftlänge
     -Schriftgröße
+    -Angabe der Working Area
     
 -Singularitäten Handling lösen über Stift anheben und Singularität umgehen und dann weiter schreiben
 -Code in Python
+
+-Projektphasen:
+    -Phase 1:
+	-ROS Package
+	-kleine Gui
+	-Steuerung des YouBot in VRep über VRep-Kinematics
+	-Ansteuerung von hardgecodeten Punkten
+    -Phase 2:
+	-kleine Buchstaben Datenbank
+	-Transformationen für Buchstaben-KoordinatenSystem, Schreibunterlage-System, etc.
+	-Buchstaben schreiben mit Vrep-Kinematics
+    -Phase 3:
+	-große Buchstaben Datenbank
+	-Buchstaben schreiben mit eigener Kinematik, Rückwärtskinematik und Singularitäten-Handling
