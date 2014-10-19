@@ -1,0 +1,3 @@
+-gemeinsamen ordner zur vm hinzufügen mit bezeichnung "vboxshare"
+-vm kriegt ihr von mir dann
+--> nun sollte unter /home/student/Windowsordner der ganze krams zu finden sein

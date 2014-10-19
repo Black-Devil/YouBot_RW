@@ -1,0 +1,17 @@
+-Buchstaben Datenbank:
+    -Map mit Buchstaben nach Name sortiert
+    -Buchstabe:
+      -relativer Pfad zum Koordinatenursprung des Buchstaben
+      -Koordinatensystem des Buchstaben wird dann auf das lokale Koordinatensystem der Schreibunterlage gesetzt
+      -Breite des Buchstaben
+      -Name
+      -Schriftgröße
+      
+-GUI mit:
+    -Textfeld
+    -Write Button
+    -Definition für Stiftlänge
+    -Schriftgröße
+    
+-Singularitäten Handling lösen über Stift anheben und Singularität umgehen und dann weiter schreiben
+-Code in Python
