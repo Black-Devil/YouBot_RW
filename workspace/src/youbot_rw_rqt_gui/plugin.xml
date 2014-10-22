@@ -1,0 +1,18 @@
+<library path="src">
+  <class name="YouBotGui" type="youbot_rw_rqt_gui.my_module.YouBotGui" base_class_type="rqt_gui_py::Plugin">
+    <description>
+      YouBot Remote Writing GUI
+    </description>
+    <qtgui>             
+      <group>
+        <label>YouBot_RW_GUI</label>
+        <icon type="theme">folder</icon>
+        <statustip>Plugins related to YouBot_RW.</statustip>
+      </group>
+
+      <label>YouBot RW GUI</label>
+      <icon type="theme">system-help</icon>
+      <statustip>YouBot Remote Writing GUI</statustip>
+    </qtgui>
+  </class>
+</library>
