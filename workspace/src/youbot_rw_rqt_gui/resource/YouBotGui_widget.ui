@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>943</width>
+    <width>600</width>
     <height>325</height>
    </rect>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>600</width>
+    <height>16777215</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>YouBot_RW_GUI</string>
@@ -30,28 +36,76 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="QPlainTextEdit" name="plainTextEdit_writeContent"/>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="status_bar_layout">
+    <layout class="QHBoxLayout" name="content_layout">
      <item>
-      <widget class="QProgressBar" name="progress_bar">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="value">
-        <number>0</number>
-       </property>
-       <property name="textVisible">
-        <bool>false</bool>
+      <widget class="QPlainTextEdit" name="plainTextEdit_writeContent">
+       <property name="maximumSize">
+        <size>
+         <width>600</width>
+         <height>16777215</height>
+        </size>
        </property>
       </widget>
      </item>
      <item>
+      <layout class="QFormLayout" name="config_layout">
+       <item row="0" column="0">
+        <widget class="QLabel" name="fontsize_label">
+         <property name="text">
+          <string>Fontsize</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QSpinBox" name="fontsize_spinBox">
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="minimum">
+          <number>1</number>
+         </property>
+         <property name="maximum">
+          <number>20</number>
+         </property>
+         <property name="value">
+          <number>10</number>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="pencilLength_label">
+         <property name="text">
+          <string>Pencil Length [cm]</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QDoubleSpinBox" name="pencilLength_doubleSpinBox">
+         <property name="maximum">
+          <double>200.000000000000000</double>
+         </property>
+         <property name="value">
+          <double>7.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="status_bar_layout">
+     <item>
       <widget class="QPushButton" name="write_button">
+       <property name="maximumSize">
+        <size>
+         <width>200</width>
+         <height>16777215</height>
+        </size>
+       </property>
        <property name="toolTip">
         <string>Toggle Thumbnails</string>
        </property>
@@ -68,7 +122,7 @@
         </size>
        </property>
        <property name="checkable">
-        <bool>true</bool>
+        <bool>false</bool>
        </property>
       </widget>
      </item>
@@ -76,7 +130,7 @@
       <widget class="QLabel" name="status_label">
        <property name="maximumSize">
         <size>
-         <width>200</width>
+         <width>800</width>
          <height>16777215</height>
         </size>
        </property>
@@ -93,7 +147,7 @@
         <number>2</number>
        </property>
        <property name="text">
-        <string/>
+        <string>default</string>
        </property>
       </widget>
      </item>
