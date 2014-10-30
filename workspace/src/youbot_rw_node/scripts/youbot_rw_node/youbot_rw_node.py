@@ -70,9 +70,17 @@ class Node(object):
         
         cmd_list = msg.data.split("#", 1)        	
 	
-	rospy.loginfo(cmd_list[0])
-	rospy.loginfo(cmd_list[1])
-	self.pub_output.publish(msg.data)
+	#CONFIG
+	self.config_list_string = (cmd_list[0].replace("config:", "", 1)).split(";")
+	self.config_fontsize = int(self.config_list_string[0])
+	self.config_pencil_length = float(self.config_list_string[1])	
+	
+	#DATA
+	self.data_string = cmd_list[1].replace("data:", "", 1)
+	
+	#DO WRITING WITH ROBOT HERE
+	
+	#self.pub_output.publish(msg.data)
 	
         #rospy.logwarn('self.poly_y == 0')
 
