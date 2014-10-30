@@ -117,7 +117,7 @@ class YouBotGuiWidget(QWidget):
 	self.set_status_text.emit("send write command")        
         
         #set config: [Fontsize;PencilLength;]
-        commandStr = "#config:" + str(self.fontsize_spinBox.value()) + ";" + str(self.pencilLength_doubleSpinBox.value())
+        commandStr = "config:" + str(self.fontsize_spinBox.value()) + ";" + str(self.pencilLength_doubleSpinBox.value())
         
         #set text data
         commandStr = commandStr + "#data:" + str(self.plainTextEdit_writeContent.toPlainText())
