@@ -42,6 +42,8 @@ from python_qt_binding.QtGui import *#QFileDialog, QIcon, QWidget
 
 from std_msgs.msg import *
 
+import status_intf as status
+
 
 
 class YouBotGuiWidget(QWidget):
@@ -63,7 +65,8 @@ class YouBotGuiWidget(QWidget):
         loadUi(ui_file, self)
         
         #self.my_node = rospy.init_node('youbot_rw_gui_node')
-        self.pub_write_cmd = rospy.Publisher('/youbot_rw/write_cmd', String, tcp_nodelay=True,queue_size=1)
+        self.pub_write_cmd = rospy.Publisher('/youbot_rw/gui2node', String, tcp_nodelay=True,queue_size=1)
+        rospy.Subscriber('/youbot_rw/node2gui', String, self.callback_status_cmd)
 
         self.setObjectName('YouBot_RW_GUI')
         
@@ -112,9 +115,7 @@ class YouBotGuiWidget(QWidget):
         event.accept()   
 
 
-    def _handle_write_clicked(self):
-	#status
-	self.set_status_text.emit("send write command")        
+    def _handle_write_clicked(self):		        
         
         #set config: [Fontsize;PencilLength;]
         commandStr = "config:" + str(self.fontsize_spinBox.value()) + ";" + str(self.pencilLength_doubleSpinBox.value())
@@ -122,6 +123,24 @@ class YouBotGuiWidget(QWidget):
         #set text data
         commandStr = commandStr + "#data:" + str(self.plainTextEdit_writeContent.toPlainText())
         self.pub_write_cmd.publish(commandStr)    
+        
+        
+    def callback_status_cmd(self,msg):                       
+        
+        cmd_list = msg.data.split("#", 1)        	
+	
+	#CONFIG
+	self.status_list_string = (cmd_list[0].replace("status:", "", 1)).split(";")
+	self.status_node_status = int(self.status_list_string[0])
+	self.status_vrep_status = int(self.status_list_string[1])	
+	
+	#DATA
+	self.status_data_string = cmd_list[1].replace("error:", "", 1)
+	
+	
+	if self.status_node_status == status.STATUS_NODE_NO_ERROR:	    
+	    self.set_status_text.emit(self.status_data_string)
+                
     
 
     def _set_status_text(self, text):
