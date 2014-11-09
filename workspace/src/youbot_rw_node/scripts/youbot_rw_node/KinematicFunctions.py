@@ -2,13 +2,12 @@
 import numpy as np
 
 #DH Parameter Matrix
-dhParameter = np.mat([[0.0,     0.0,        np.pi/2,        np.pi],
-                      [0.35,    -0.815,     0.0,        np.pi/2],
-                      [1.2,    0.0,        0.0,   0.0],
-                      [-0.145,  0.0,        np.pi/2,        -np.pi/2],
-                      [0.0,     -1.545,     0.0,        np.pi/2],
-                      [0.0,     0.0,        0.0,        -np.pi/2],
-                      [0.0,     -0.158,     np.pi,      np.pi]])
+dhParameter = np.mat([[0.0,     0.0,       0.0,         0          ],
+                      [0.147,   0.033,     0.0,         np.pi/2    ],
+                      [0.0,     0.155,     0.0,         0.0        ],
+                      [0.0,     0.135,     0.0,         0.0        ],
+                      [0.0,     0.0,       np.pi/2,     np.pi/2    ],
+                      [0.2175,  0.0,       0.0,         0   ]])
 
 #distance value for computation of angle two (shoulder)
 w = np.sqrt(np.power(0.145,2)+np.power(1.545,2))
@@ -565,8 +564,7 @@ def CalculateInverseKinematicsOrientation(tcp, angles):
     angle_buffer = np.array([0.0,0.0])
     
     #calculate matrix for orientation angles
-    orient_mat = np.mat(CalculateInverseKinematicsTransformation(center_of_cs, 0.0, 7, 6))
-    orient_mat = np.mat(tcp)*orient_mat
+    orient_mat = np.mat(tcp)*np.mat(CalculateInverseKinematicsTransformation(center_of_cs, 0.0, 6, 5))                          #transform tool-center-point to wrist point
     orient_mat = np.mat(CalculateInverseKinematicsTransformation(center_of_cs, 0.0, 1, 0))*orient_mat
     orient_mat = np.mat(CalculateInverseKinematicsTransformation(center_of_cs, angles[0], 2, 1))*orient_mat
     orient_mat = np.mat(CalculateInverseKinematicsTransformation(center_of_cs, angles[1], 3, 2))*orient_mat
