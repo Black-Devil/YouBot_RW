@@ -1,1 +1,0 @@
-http://openrave.org/docs/latest_stable/examples/#openrave-examples
