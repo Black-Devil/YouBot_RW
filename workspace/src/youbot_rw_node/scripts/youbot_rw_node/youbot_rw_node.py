@@ -6,6 +6,7 @@ import threading
 
 import rospy
 from std_msgs.msg import *
+from sensor_msgs.msg import *
 
 import robot_config as rc
 import KinematicFunctions as kf
@@ -34,6 +35,14 @@ class Node(object):
         
         rospy.Subscriber('/youbot_rw/gui2node', String, self.callback_write_cmd)
         self.pub2gui = rospy.Publisher('/youbot_rw/node2gui', String, tcp_nodelay=True,queue_size=1)
+        # Publisher for vrep interface
+        self.pub2vrep_joint_1_trgt = rospy.Publisher('/youbot_rw/vrep/arm_joint1_target', Float64, tcp_nodelay=True,queue_size=1)
+        self.pub2vrep_joint_2_trgt = rospy.Publisher('/youbot_rw/vrep/arm_joint2_target', Float64, tcp_nodelay=True,queue_size=1)
+        self.pub2vrep_joint_3_trgt = rospy.Publisher('/youbot_rw/vrep/arm_joint3_target', Float64, tcp_nodelay=True,queue_size=1)
+        self.pub2vrep_joint_4_trgt = rospy.Publisher('/youbot_rw/vrep/arm_joint4_target', Float64, tcp_nodelay=True,queue_size=1)
+        self.pub2vrep_joint_5_trgt = rospy.Publisher('/youbot_rw/vrep/arm_joint5_target', Float64, tcp_nodelay=True,queue_size=1)
+        
+        rospy.Subscriber('/vrep/youbot_rw/joint_states', JointState, self.callback_vrep_joint_states)
         
         
         self.spin_restarter()        
@@ -83,10 +92,25 @@ class Node(object):
         self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "received write command")
 	#DO WRITING WITH ROBOT HERE
 	
+	self.pub2vrep_joint_1_trgt.publish(70.0)
 	#self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "movement in progress")
 	
 	
         #rospy.logwarn('self.poly_y == 0')
+
+        self.lock.release()
+        
+    def callback_vrep_joint_states(self,msg):
+        if(not self.run_status):
+            return
+
+        self.lock.acquire()
+
+
+        #rospy.loginfo("vrep_joint_states callback")        
+        #self.time = rospy.get_time()
+        
+        #Todo: Parse msg here
 
         self.lock.release()
         
