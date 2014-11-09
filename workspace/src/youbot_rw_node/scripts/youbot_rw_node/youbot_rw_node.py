@@ -8,6 +8,8 @@ import rospy
 from std_msgs.msg import *
 from sensor_msgs.msg import *
 
+import numpy as np
+
 import robot_config as rc
 import KinematicFunctions as kf
 import MotionFunctions as mf
@@ -46,7 +48,8 @@ class Node(object):
         
         
         self.spin_restarter()        
-        
+
+
     def init_params(self):
         self.rate = 100
         self.disable = False
@@ -55,7 +58,8 @@ class Node(object):
         self.status_vrep = 0 #0=doing nothing 1= in progress 2= movement done
                 
         #do init here
-        
+
+
     def spin_restarter(self):
         #print "waiting for button"
         while(not rospy.is_shutdown() and self.run):
@@ -63,7 +67,8 @@ class Node(object):
                 self.init_params()
                 self.spin()                
             self.r.sleep()
-            
+
+
     def spin(self):
         self.spin_count += 1
         if(self.spin_count>1):
@@ -76,29 +81,49 @@ class Node(object):
 
         rospy.loginfo("stopped")
         self.spin_count -= 1
-        
-        
-        
+
+
+    def send_vrep_joint_targets(self, trgts):
+        rospy.loginfo("send vrep joint targets")
+        trgts_bogen = np.array([(((2.*np.pi)/360.)*trgts[0]),
+                                (((2.*np.pi)/360.)*trgts[1]),
+                                (((2.*np.pi)/360.)*trgts[2]),
+                                (((2.*np.pi)/360.)*trgts[3]),
+                                (((2.*np.pi)/360.)*trgts[4])])
+
+        self.pub2vrep_joint_1_trgt.publish(trgts_bogen[0])
+        self.pub2vrep_joint_2_trgt.publish(trgts_bogen[1])
+        self.pub2vrep_joint_3_trgt.publish(trgts_bogen[2])
+        self.pub2vrep_joint_4_trgt.publish(trgts_bogen[3])
+        self.pub2vrep_joint_5_trgt.publish(trgts_bogen[4])
+    
+    
+     
     def callback_write_cmd(self,msg):
         if(not self.run_status):
             return
 
         self.lock.acquire()
 
-
         rospy.loginfo("write_cmd callback")        
         self.time = rospy.get_time()
         self.parse_input_from_gui(msg)
         self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "received write command")
-	#DO WRITING WITH ROBOT HERE
+	    #DO WRITING WITH ROBOT HERE
+        print self.config_use_thetas
+        if(self.config_use_thetas == 1 and self.config_use_pos == 0):
+            self.send_vrep_joint_targets(self.config_thetas)
+        #if(self.config_use_pos == 1 and self.config_use_thetas == 0):
+            #todo: implement inverse kinematics
+
 	
-	self.pub2vrep_joint_1_trgt.publish(70.0)
-	#self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "movement in progress")
+	    #self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "movement in progress")
 	
 	
         #rospy.logwarn('self.poly_y == 0')
 
         self.lock.release()
+
         
     def callback_vrep_joint_states(self,msg):
         if(not self.run_status):
@@ -116,21 +141,32 @@ class Node(object):
         
         
     def parse_input_from_gui(self, msg):
-	cmd_list = msg.data.split("#", 1)        	
-	
-	#CONFIG
-	self.config_list_string = (cmd_list[0].replace("config:", "", 1)).split(";")
-	self.config_fontsize = int(self.config_list_string[0])
-	self.config_pencil_length = float(self.config_list_string[1])	
-	
-	#DATA
-	self.data_string = cmd_list[1].replace("data:", "", 1)
+        cmd_list = msg.data.split("#", 1)
+
+        #CONFIG
+        self.config_list_string = (cmd_list[0].replace("config:", "", 1)).split(";")
+        self.config_fontsize = int(self.config_list_string[0])
+        self.config_pencil_length = float(self.config_list_string[1])
+        self.config_use_thetas = int(self.config_list_string[2])
+        self.config_thetas = np.array([(float(self.config_list_string[3])),\
+            (float(self.config_list_string[4])),\
+            (float(self.config_list_string[5])),\
+            (float(self.config_list_string[6])),\
+            (float(self.config_list_string[7])),])
+
+        self.config_use_pos = int(self.config_list_string[8])
+        self.config_pos = np.array([(float(self.config_list_string[9])),\
+            (float(self.config_list_string[10])),\
+            (float(self.config_list_string[11]))])
+
+        #DATA
+        self.data_string = cmd_list[1].replace("data:", "", 1)
     
     def send_status2gui(self, nodestatus, vrepstatus, error_txt):
-	self.status = nodestatus
-	self.status_vrep = vrepstatus
-	self.status_string = error_txt
-	#set status: [nodestatus;vrepstatus;]
+        self.status = nodestatus
+        self.status_vrep = vrepstatus
+        self.status_string = error_txt
+        #set status: [nodestatus;vrepstatus;]
         commandStr = "status:" + str(self.status) + ";" + str(self.status_vrep)
         
         #set error text

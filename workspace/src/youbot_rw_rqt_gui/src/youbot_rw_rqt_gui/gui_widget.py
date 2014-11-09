@@ -116,9 +116,26 @@ class YouBotGuiWidget(QWidget):
 
 
     def _handle_write_clicked(self):		        
-        
-        #set config: [Fontsize;PencilLength;]
-        commandStr = "config:" + str(self.fontsize_spinBox.value()) + ";" + str(self.pencilLength_doubleSpinBox.value())
+
+        if(self.use_thetas_checkBox.isChecked()):
+            useThetasTmp = "1"
+        else:
+            useThetasTmp = "0"
+        if(self.use_pos_checkBox.isChecked()):
+            usePosTmp = "1"
+        else:
+            usePosTmp = "0"
+
+        #set config: [Fontsize;PencilLength;UseThetas;Theta_1;Theta_2;Theta_3;Theta_4;Theta_5;UsePos;Pos_X;Pos_Y;Pos_Z]
+        commandStr = "config:" + str(self.fontsize_spinBox.value()) + ";" + str(self.pencilLength_doubleSpinBox.value())\
+                     + ";" + useThetasTmp + ";" + str(self.theta_1_doubleSpinBox.value())\
+                                                + ";" + str(self.theta_2_doubleSpinBox.value())\
+                                                + ";" + str(self.theta_3_doubleSpinBox.value())\
+                                                + ";" + str(self.theta_4_doubleSpinBox.value())\
+                                                + ";" + str(self.theta_5_doubleSpinBox.value())\
+                     + ";" + usePosTmp + ";" + str(self.pos_x_doubleSpinBox.value())\
+                                              + ";" + str(self.pos_y_doubleSpinBox.value())\
+                                              + ";" + str(self.pos_z_doubleSpinBox.value())\
         
         #set text data
         commandStr = commandStr + "#data:" + str(self.plainTextEdit_writeContent.toPlainText())
