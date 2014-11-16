@@ -15,7 +15,7 @@ print min_angles_
 print max_angles_
 
 def cleanFrame ( frame ):
-    frame = kdl.Frame.Identity()
+    #frame = kdl.Frame.Identity()
     for i in range(0,3):
         for j in range(0,3):
             if math.fabs(frame.M[i,j]) < 0.000001:
@@ -146,7 +146,7 @@ def inverseKinematics(  g0  , offset_joint_1  , offset_joint_3  ):
     # Second joint
     t1 = math.atan2(p2.z(), p2.x())
     t2 = math.atan2(l3 * math.sin(j3), l2 + l3 * math.cos(j3))
-    j2 = math.pi - t1 - t2
+    j2 = (math.pi/2) - t1 - t2
 
 
     # Fourth joint, determines the pitch of the gripper
@@ -216,17 +216,13 @@ dir=1
 val=0.5
 while not rospy.is_shutdown():
     tmp=CartToJnt(kdl.Frame(  kdl.Rotation.Identity()  ,  kdl.Vector(0, 0, 0.5) ))
-    pub.publish(-0.191986)
-    pub1.publish(0.64001)
-    pub2.publish(-1.55513)
-    pub3.publish(1.29037)
-    pub4.publish(-0.218166)
-    #pub.publish(tmp[0][0])
-    #pub1.publish(tmp[0][1])
-    #pub2.publish(tmp[0][2])
-    #pub3.publish(tmp[0][3])
-    #pub4.publish(tmp[0][4])
-    print tmp[0]
+    pub.publish(tmp[0][0])
+    pub1.publish(tmp[0][1])
+    pub2.publish(tmp[0][2])
+    pub3.publish(tmp[0][3])
+    pub4.publish(tmp[0][4])
+    print "Ergebnis:"
+    print tmp
     if dir==1:
         if val>1:
             dir=0
