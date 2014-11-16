@@ -130,14 +130,53 @@ class Node(object):
             return
 
         self.lock.acquire()
-
-
-        #rospy.loginfo("vrep_joint_states callback")        
-        #self.time = rospy.get_time()
-        
-        #Todo: Parse msg here
-
+        self.vrep_states_msg.name = msg.name
+        self.vrep_states_msg.position = msg.position
+        self.vrep_states_msg.velocity = msg.velocity
+        self.vrep_states_msg.effort = msg.effort
         self.lock.release()
+
+
+    #returns (found, position, velocity, effort) for the joint joint_name
+    #(found is 1 if found, 0 otherwise)
+    def return_joint_state(self, joint_name):
+
+         #no messages yet
+        if self.vrep_states_msg.name == []:
+            rospy.logerr("No robot_state messages received!\n")
+            return (0, 0., 0., 0.)
+
+        #return info for this joint
+        self.lock.acquire()
+        if joint_name in self.vrep_states_msg.name:
+            index = self.vrep_states_msg.name.index(joint_name)
+            position = self.vrep_states_msg.position[index]
+            velocity = self.vrep_states_msg.velocity[index]
+            effort = self.vrep_states_msg.effort[index]
+
+        #unless it's not found
+        else:
+            rospy.logerr("Joint %s not found!", (joint_name,))
+            self.lock.release()
+            return (0, 0., 0., 0.)
+        self.lock.release()
+        return (1, position, velocity, effort)
+
+
+         #server callback: returns arrays of position, velocity, and effort
+         #for a list of joints specified by name
+    #def return_joint_states(self, req):
+    #    joints_found = []
+    #    positions = []
+    #    velocities = []
+    #    efforts = []
+    #    for joint_name in req.name:
+    #        (found, position, velocity, effort) = self.return_joint_state(joint_name)
+    #        joints_found.append(found)
+    #        positions.append(position)
+    #        velocities.append(velocity)
+    #        efforts.append(effort)
+    #    #return ReturnJointStatesResponse(joints_found, positions, velocities, efforts)
         
         
     def parse_input_from_gui(self, msg):

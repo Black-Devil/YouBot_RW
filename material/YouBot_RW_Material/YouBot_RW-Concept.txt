@@ -19,9 +19,9 @@
 
 -Projektphasen:
     -Phase 1:
-	-ROS Package
-	-kleine Gui
-	-Steuerung des YouBot in VRep über VRep-Kinematics
+	-ROS Package	[check]
+	-kleine Gui	[check]
+	-Steuerung des YouBot in VRep über VRep-Kinematics	[check]
 	-Ansteuerung von hardgecodeten Punkten
     -Phase 2:
 	-kleine Buchstaben Datenbank
@@ -30,3 +30,23 @@
     -Phase 3:
 	-große Buchstaben Datenbank
 	-Buchstaben schreiben mit eigener Kinematik, Rückwärtskinematik und Singularitäten-Handling
+	
+	
+	
+	
+	
+	
+	
+	
+	
+-Workflow Inverse Kin:
+      -aktueller Punkt auf Schreibunterlage dient als Referenz für Buchstaben
+      -BuchstabenKoordSys wird auf aktuellen Punkt auf schreibunterlage gesetzt
+      -Trafo von Punkten im BuchstabenKoordSys in das KoordSys der Schreibunterlage -->Punkt_im_KoordSys_WritePlane
+      -Berechnung des WristPoints durch Offset der Stiftlänge vom Punkt_im_KoordSys_WritePlane (Bedingung: Stift senkrecht über Schreibunterlage)
+	  -->WristPoint_im_KoordSys_WritePlane
+      -Trafo von SchreibunterlageKoordSys in KoordSys vom Joint_1 -->WristPoint_im_KoordSys_Joint1
+      -Berechnung von Theta_1_a und Theta_1_b durch Drehung des Arms in die Ebene vom WristPoint_im_KoordSys_Joint1
+      -Trafo von WristPoint_im_KoordSys_Joint1 in KoordSys des Joint_2
+      -Berechnung von Theta_2_aa, Theta_2_ab und Theta_2_ba, Theta_2_bb
+      -...
