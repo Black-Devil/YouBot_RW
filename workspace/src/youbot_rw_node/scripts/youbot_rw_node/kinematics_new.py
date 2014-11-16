@@ -2,6 +2,7 @@
 import PyKDL as kdl
 import math
 import rospy
+import numpy as np
 
 from std_msgs.msg import Float64
 
@@ -11,8 +12,6 @@ ALMOST_MINUS_ONE=-0.9999999
 min_angles_ = [math.radians(-169.0),math.radians(-65.0),math.radians(-151.0),math.radians(-102.0),math.radians(-167.0)]
 max_angles_ = [math.radians(169.0),math.radians(90.0),math.radians(146.0),math.radians(102.0),math.radians(167.0)]
 
-print min_angles_
-print max_angles_
 
 def cleanFrame ( frame ):
     #frame = kdl.Frame.Identity()
@@ -61,96 +60,74 @@ def projectGoalOrientationIntoArmSubspace( goal ):
 
 def inverseKinematics(  g0  , offset_joint_1  , offset_joint_3  ):
     # Parameters from youBot URDF file
-    l0x = 0.024
-    l0z = 0.096
-    l1x = 0.033
-    l1z = 0.019
-    l2 = 0.155
-    l3 = 0.135
+    dh=list()
+    dh.append({'theta':0           ,'d':0.07    ,'a':0.23     ,'alpha':0               })  #to write plane
+    dh.append({'theta':0           ,'d':0.147   ,'a':0.033    ,'alpha':math.pi/2       })  #to joint 2
+    dh.append({'theta':0           ,'d':0       ,'a':0.155    ,'alpha':0               })  #to joint 3
+    dh.append({'theta':0           ,'d':0       ,'a':0.135    ,'alpha':0               })  #to joint 4
+    dh.append({'theta':math.pi/2   ,'d':0       ,'a':0        ,'alpha':math.pi/2       })  #to joint 5
+    dh.append({'theta':0           ,'d':0.2175  ,'a':0        ,'alpha':0               })  #to tcp
+    dh.append({'theta':0           ,'d':0.03    ,'a':0        ,'alpha':0               })  #to pencil
 
-    # Distance from arm_link_4 to arm_link_5
-    d = 0.13
+    tmp=kdl.Frame().DH(dh[6]['a'],dh[6]['alpha'],dh[6]['d'],dh[6]['theta'])
+    tmp2=kdl.Frame().DH(dh[5]['a'],dh[5]['alpha'],dh[5]['d'],dh[5]['theta'])
 
-    j1 = 0.0
-    j2 = 0.0
-    j3 = 0.0
-    j4 = 0.0
-    j5 = 0.0
+    g0_off=tmp2*tmp*g0
+
+    print "G0: ",g0.p
+    print "G0_off: ",g0_off.p
 
 
-    # Transform from frame 0 to frame 1
-    frame0_to_frame1 = kdl.Frame(kdl.Rotation.Identity(),  kdl.Vector(-l0x, 0.0, -l0z))
-    g1 = frame0_to_frame1 * g0
+    tmp = kdl.Frame().DH(dh[0]['a'],dh[0]['alpha'],dh[0]['d'],dh[0]['theta'])
 
-    # First joint
+    g1=tmp*g0_off
+
+    print "G01: ",g1.p
+
     j1 = math.atan2(g1.p.y(), g1.p.x())
+    j4 = j1
     if offset_joint_1:
         if j1 < 0:
             j1 += math.pi
         else:
             j1 -= math.pi
 
-    # Transform from frame 1 to frame 2
-    frame1_to_frame2 = kdl.Frame(kdl.Rotation.RPY(0,0,-j1), kdl.Vector(-l1x, 0.0 , -l1z))
-    g2 =frame1_to_frame2 * g1
+    print "J1: ",j1
 
-    # Project the frame into the plane of the arm
-    g2_proj = projectGoalOrientationIntoArmSubspace(g2)
+    print "d[1]",j1+dh[1]['theta']
 
+    tmp = kdl.Frame().DH(dh[1]['a'], dh[1]['alpha'], dh[1]['d'], j4+dh[1]['theta'])
+    frame1_to_frame2 = kdl.Frame(kdl.Rotation.RPY(dh[1]['alpha'],0,j4), kdl.Vector(dh[1]['a'], 0.0 , dh[1]['d']))
+    g2=frame1_to_frame2*g1
 
-    # Set all values in the frame that are close to zero to exactly zero
-    g2_proj = cleanFrame(g2_proj)
+    print "G2_dh: ",(tmp*g1).p
+    print "G2_ro: ",g2.p
 
-    # Fifth joint, determines the roll of the gripper (= wrist angle)
-    s1 = math.sin(j1)
-    c1 = math.cos(j1)
-    r11 = g1.M[0, 0]
-    r12 = g1.M[0, 1]
-    r21 = g1.M[1, 0]
-    r22 = g1.M[1, 1]
-    j5 = math.atan2(r21 * c1 - r11 * s1, r22 * c1 - r12 * s1)
+    vec_25=math.sqrt(g2.p[0]**2 + g2.p[0]**2 + g2.p[0]**2)
+    print "VEC_25: ",vec_25
 
 
-    # The sum of joint angles two to four determines the overall "pitch" of the end effector
-    r13 = g2_proj.M[0, 2]
-    r33 = g2_proj.M[2, 2]
-    j234 = math.atan2(r13, r33)
+    s_angle = math.atan2(g2.p.y(),g2.p.x())
+    print s_angle
 
-    p2 = g2_proj.p
+    w=0.135
+    a=0.155
 
-    # In the arm's subplane, offset from the end-effector to the fourth joint
-    p2.x(p2.x() - d * math.sin(j234))
-    p2.z(p2.z() - d * math.cos(j234))
-
-
-    # Check if the goal position can be reached at all
-    if (l2 + l3) < math.sqrt((p2.x() * p2.x()) + (p2.z() * p2.z())):
-        return kdl.JntArray(0)
-
-    # Third joint
-    l_sqr = (p2.x() * p2.x()) + (p2.z() * p2.z())
-    l2_sqr = l2 * l2
-    l3_sqr = l3 * l3
-    j3_cos = (l_sqr - l2_sqr - l3_sqr) / (2.0 * l2 * l3)
-
-    if j3_cos > ALMOST_PLUS_ONE:
-        j3 = 0.0
-    elif j3_cos < ALMOST_MINUS_ONE:
-        j3 = math.pi
-    else:
-        j3 = math.atan2(math.sqrt(1.0 - (j3_cos * j3_cos)), j3_cos)
+    r_angle=math.acos((w**2-vec_25**2-a**2/2*vec_25-a))
 
     if offset_joint_3:
-        j3 = -j3
-
-    # Second joint
-    t1 = math.atan2(p2.z(), p2.x())
-    t2 = math.atan2(l3 * math.sin(j3), l2 + l3 * math.cos(j3))
-    j2 = (math.pi/2) - t1 - t2
+        j2=s_angle-r_angle
+    else:
+        j2=s_angle+r_angle
 
 
-    # Fourth joint, determines the pitch of the gripper
-    j4 = j234 - j2 - j3
+
+
+
+
+
+
+
 
 
     # This IK assumes that the arm points upwards, so we need to consider the offsets to the real home position
@@ -161,11 +138,13 @@ def inverseKinematics(  g0  , offset_joint_1  , offset_joint_3  ):
     offset5 = math.radians( 167.5)
 
     solution = kdl.JntArray(5)
-    solution[0] = (offset1 - j1)
-    solution[1] = (j2 + offset2)
-    solution[2] = (j3 + offset3)
-    solution[3] = (j4 + offset4)
-    solution[4] = (offset5 - j5)
+    solution[0] = j1#(offset1 - j1)
+    solution[1] = j2#(j2 + offset2)
+    solution[2] = 0#(j3 + offset3)
+    solution[3] = 0#(j4 + offset4)
+    solution[4] = 0#(offset5 - j5)
+
+    print "J2: ",j2
 
     for i in range(0,5):
         while solution[i]>math.pi:
@@ -213,24 +192,24 @@ pub4 = rospy.Publisher('/youbot_rw/vrep/arm_joint5_target', Float64, queue_size=
 
 r = rospy.Rate(10) # 10hz
 dir=1
-val=0.5
+val=0.0
 while not rospy.is_shutdown():
-    tmp=CartToJnt(kdl.Frame(  kdl.Rotation.Identity()  ,  kdl.Vector(0, 0, 0.5) ))
+    tmp=CartToJnt(kdl.Frame(  kdl.Rotation.Identity()  ,  kdl.Vector(0.0, 0.0, 0.0) ))
+    print tmp
     pub.publish(tmp[0][0])
     pub1.publish(tmp[0][1])
     pub2.publish(tmp[0][2])
     pub3.publish(tmp[0][3])
     pub4.publish(tmp[0][4])
-    print "Ergebnis:"
-    print tmp
+    #print tmp
     if dir==1:
-        if val>1:
+        if val>0.4:
             dir=0
-        val=val+0.1
+        val=val+0.01
     else:
-        if val<0:
+        if val<-0.4:
             dir=1
-        val=val-0.1
+        val=val-0.01
 
     #print val
 
