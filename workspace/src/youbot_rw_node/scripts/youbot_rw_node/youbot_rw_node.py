@@ -130,10 +130,10 @@ class Node(object):
             return
 
         self.lock.acquire()
-        self.vrep_states_msg.name = msg.name
-        self.vrep_states_msg.position = msg.position
-        self.vrep_states_msg.velocity = msg.velocity
-        self.vrep_states_msg.effort = msg.effort
+        self.vrep_msg_name = msg.name
+        self.vrep_msg_position = msg.position
+        self.vrep_msg_velocity = msg.velocity
+        self.vrep_msg_effort = msg.effort
         self.lock.release()
 
 
@@ -142,17 +142,17 @@ class Node(object):
     def return_joint_state(self, joint_name):
 
          #no messages yet
-        if self.vrep_states_msg.name == []:
+        if self.vrep_msg_name == []:
             rospy.logerr("No robot_state messages received!\n")
             return (0, 0., 0., 0.)
 
         #return info for this joint
         self.lock.acquire()
-        if joint_name in self.vrep_states_msg.name:
-            index = self.vrep_states_msg.name.index(joint_name)
-            position = self.vrep_states_msg.position[index]
-            velocity = self.vrep_states_msg.velocity[index]
-            effort = self.vrep_states_msg.effort[index]
+        if joint_name in self.vrep_msg_name:
+            index = self.vrep_msg_name.index(joint_name)
+            position = self.vrep_msg_position[index]
+            velocity = self.vrep_msg_velocity[index]
+            effort = self.vrep_msg_effort[index]
 
         #unless it's not found
         else:
