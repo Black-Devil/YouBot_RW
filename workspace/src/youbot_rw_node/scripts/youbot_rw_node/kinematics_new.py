@@ -22,6 +22,22 @@ def cleanFrame ( frame ):
     return frame
 
 
+
+def transform (g,a,alpha,d,theta):
+    tmp = kdl.Frame().DH(0, 0, 0, theta)
+    g_1=tmp*g
+    tmp = kdl.Frame().DH(0, 0, d, 0)
+    g_2=tmp*g_1
+    tmp = kdl.Frame().DH(a, 0, 0, 0)
+    g_3=tmp*g_2
+    tmp = kdl.Frame().DH(0, alpha, 0, 0)
+    return tmp*g_3
+
+
+
+
+
+
 def projectGoalOrientationIntoArmSubspace( goal ):
     """
     :param goal: kdl.Frame
@@ -94,14 +110,21 @@ def inverseKinematics(  g0  , offset_joint_1  , offset_joint_3  ):
 
     print "J1: ",j1
 
-    print "d[1]",j1+dh[1]['theta']
+    tmp = kdl.Frame().DH(0, 0, 0, j4+dh[1]['theta'])
+    g1_1=tmp*g1
+    tmp = kdl.Frame().DH(0, 0, dh[1]['d'], 0)
+    g1_2=tmp*g1_1
+    tmp = kdl.Frame().DH(dh[1]['a'], 0, 0, 0)
+    g1_3=tmp*g1_2
+    tmp = kdl.Frame().DH(0, dh[1]['alpha'], 0, 0)
+    g1_4=tmp*g1_3
+    print "dddddddddddddddddddd:    ",g1_4.p
 
-    tmp = kdl.Frame().DH(dh[1]['a'], dh[1]['alpha'], dh[1]['d'], j4+dh[1]['theta'])
-    frame1_to_frame2 = kdl.Frame(kdl.Rotation.RPY(dh[1]['alpha'],0,j4), kdl.Vector(dh[1]['a'], 0.0 , dh[1]['d']))
-    g2=frame1_to_frame2*g1
+    g2=transform(g1,dh[1]['a'], dh[1]['alpha'], dh[1]['d'], j4+dh[1]['theta'])
+    print "dddddddddddddddddddd2:    ",g2.p
+    g2=g1_4
 
-    print "G2_dh: ",(tmp*g1).p
-    print "G2_ro: ",g2.p
+
 
     vec_25=math.sqrt(g2.p[0]**2 + g2.p[0]**2 + g2.p[0]**2)
     print "VEC_25: ",vec_25
@@ -113,21 +136,12 @@ def inverseKinematics(  g0  , offset_joint_1  , offset_joint_3  ):
     w=0.135
     a=0.155
 
-    r_angle=math.acos((w**2-vec_25**2-a**2/2*vec_25-a))
+    r_angle=math.acos((w**2-vec_25**2-a**2/(2*vec_25-a)))
 
     if offset_joint_3:
         j2=s_angle-r_angle
     else:
         j2=s_angle+r_angle
-
-
-
-
-
-
-
-
-
 
 
     # This IK assumes that the arm points upwards, so we need to consider the offsets to the real home position
@@ -194,7 +208,7 @@ r = rospy.Rate(10) # 10hz
 dir=1
 val=0.0
 while not rospy.is_shutdown():
-    tmp=CartToJnt(kdl.Frame(  kdl.Rotation.Identity()  ,  kdl.Vector(0.0, 0.0, 0.0) ))
+    tmp=CartToJnt(kdl.Frame(  kdl.Rotation.Identity()  ,  kdl.Vector(0.0, 0.1, 0.0) ))
     print tmp
     pub.publish(tmp[0][0])
     pub1.publish(tmp[0][1])
