@@ -77,13 +77,13 @@ def projectGoalOrientationIntoArmSubspace( goal ):
 def inverseKinematics(  g0  , offset_joint_1  , offset_joint_3  ):
     # Parameters from youBot URDF file
     dh=list()
-    dh.append({'theta':0           ,'d':0.07    ,'a':0.23     ,'alpha':0               })  #to write plane
-    dh.append({'theta':0           ,'d':0.147   ,'a':0.033    ,'alpha':math.pi/2       })  #to joint 2
-    dh.append({'theta':0           ,'d':0       ,'a':0.155    ,'alpha':0               })  #to joint 3
-    dh.append({'theta':0           ,'d':0       ,'a':0.135    ,'alpha':0               })  #to joint 4
-    dh.append({'theta':math.pi/2   ,'d':0       ,'a':0        ,'alpha':math.pi/2       })  #to joint 5
-    dh.append({'theta':0           ,'d':0.2175  ,'a':0        ,'alpha':0               })  #to tcp
-    dh.append({'theta':0           ,'d':0.03    ,'a':0        ,'alpha':0               })  #to pencil
+    dh.append({'theta':0           ,'d':0.07    ,'a':0.23     ,'alpha':0               })  #from write plane to joint_1 (KS0)
+    dh.append({'theta':0           ,'d':0.147   ,'a':0.033    ,'alpha':math.pi/2       })  #from KS0 to joint 2 (KS1)
+    dh.append({'theta':math.pi/2   ,'d':0       ,'a':0.155    ,'alpha':0               })  #from KS1 to joint 3 (KS2)
+    dh.append({'theta':0           ,'d':0       ,'a':0.135    ,'alpha':0               })  #from KS2 to joint 4 (KS3)
+    dh.append({'theta':math.pi/2   ,'d':0       ,'a':0        ,'alpha':math.pi/2       })  #from KS3 to joint 5 (KS4)
+    dh.append({'theta':0           ,'d':0.2175  ,'a':0        ,'alpha':0               })  #from KS4 to tcp
+    dh.append({'theta':0           ,'d':0.03    ,'a':0        ,'alpha':0               })  #from tcp to pencil
 
     tmp=kdl.Frame().DH(dh[6]['a'],dh[6]['alpha'],dh[6]['d'],dh[6]['theta'])
     tmp2=kdl.Frame().DH(dh[5]['a'],dh[5]['alpha'],dh[5]['d'],dh[5]['theta'])
