@@ -29,6 +29,13 @@ class Kinematics:
 
 
     def get_dh_transform(self, dh, theta=0):
+        """ todo
+
+        :param todo
+        :type todo
+        :returns: todo
+        :rtype: todo
+        """
         trans = np.matrix((    (cos(dh['theta']+theta),    -sin(dh['theta']+theta)*cos(dh['alpha']),       sin(dh['theta']+theta)*sin(dh['alpha']),       dh['a'] *cos(dh['theta']+theta)),
             (sin(dh['theta']+theta),                      cos(dh['theta']+theta)*cos(dh['alpha']),       -cos(dh['theta']+theta)*sin(dh['alpha']),       dh['a']*sin(dh['theta']+theta)),
             (0,                                     sin(dh['alpha']),                         cos(dh['alpha']),                        dh['d']),
@@ -37,6 +44,13 @@ class Kinematics:
 
 
     def get_inv_transform(self, dh, theta=0):
+        """ todo
+
+        :param todo
+        :type todo
+        :returns: todo
+        :rtype: todo
+        """
         trans = np.matrix((  (cos(dh['theta']+theta),       sin(dh['theta']+theta),                         0,                                              -dh['a']),
             (-sin(dh['theta']+theta)*cos(dh['alpha']),      cos(dh['theta']+theta)*cos(dh['alpha']),        sin(dh['alpha']),                               -dh['d']*sin(dh['alpha'])),
             (sin(dh['alpha'])*sin(dh['theta']+theta),       -cos(dh['theta']+theta)*sin(dh['alpha']),       cos(dh['alpha']),                               -dh['d']*cos(dh['alpha'])),
@@ -44,9 +58,23 @@ class Kinematics:
         return trans
 
     def offset2world(self, thetas):
+        """ todo
+
+        :param todo
+        :type todo
+        :returns: todo
+        :rtype: todo
+        """
         return -thetas
 
     def direct_kin(self, thetas):
+        """ todo
+
+        :param todo
+        :type todo
+        :returns: todo
+        :rtype: todo
+        """
         trans= self.get_dh_transform(self.dh[1],thetas[0]) * self.get_dh_transform(self.dh[2],thetas[1]) * \
                self.get_dh_transform(self.dh[3],thetas[2]) * self.get_dh_transform(self.dh[4],thetas[3]) * \
                self.get_dh_transform(self.dh[5],thetas[4])
