@@ -1,237 +1,53 @@
 #!/usr/bin/env python
-import PyKDL as kdl
+
 import math
-import rospy
-
-from std_msgs.msg import Float64
-
-ALMOST_PLUS_ONE=0.9999999
-ALMOST_MINUS_ONE=-0.9999999
-
-min_angles_ = [math.radians(-169.0),math.radians(-65.0),math.radians(-151.0),math.radians(-102.0),math.radians(-167.0)]
-max_angles_ = [math.radians(169.0),math.radians(90.0),math.radians(146.0),math.radians(102.0),math.radians(167.0)]
-
-print min_angles_
-print max_angles_
-
-def cleanFrame ( frame ):
-    #frame = kdl.Frame.Identity()
-    for i in range(0,3):
-        for j in range(0,3):
-            if math.fabs(frame.M[i,j]) < 0.000001:
-                frame.M[i,j]=0
-    return frame
-
-
-def projectGoalOrientationIntoArmSubspace( goal ):
-    """
-    :param goal: kdl.Frame
-    :rtype : kdl.Frame
-    """
-    y_t_hat = goal.M.UnitY()
-    z_t_hat = goal.M.UnitZ()
-
-    # m_hat is the normal of the "arm plane"
-    m_hat = kdl.Vector(0, -1, 0)
-
-    # k_hat is the vector about which rotation of the goal frame is performed
-    k_hat = m_hat * z_t_hat         # cross product
-
-    # z_t_hat_tick is the new pointing direction of the arm
-    z_t_hat_tick = k_hat * m_hat     # cross product
-
-    # the amount of rotation
-    cos_theta = kdl.dot(z_t_hat , z_t_hat_tick)
-
-    # first cross product then dot product
-    sin_theta = kdl.dot(z_t_hat * z_t_hat_tick, k_hat)
-
-    # use Rodrigues' rotation formula to perform the rotation
-    # k_hat * y_t_hat is cross product
-    y_t_hat_tick = (cos_theta * y_t_hat) + (sin_theta * (k_hat * y_t_hat)) + (1 - cos_theta) * (kdl.dot(k_hat, y_t_hat)) * k_hat
-
-    x_t_hat_tick = y_t_hat_tick * z_t_hat_tick  # cross product
-
-    rot = kdl.Rotation( x_t_hat_tick, y_t_hat_tick, z_t_hat_tick )
-
-    # the frame uses the old position but has the new, projected orientation
-    return kdl.Frame(rot, goal.p)
+import numpy as np
+from numpy import sin, cos
 
 
 
-def inverseKinematics(  g0  , offset_joint_1  , offset_joint_3  ):
-    # Parameters from youBot URDF file
-    l0x = 0.024
-    l0z = 0.096
-    l1x = 0.033
-    l1z = 0.019
-    l2 = 0.155
-    l3 = 0.135
-
-    # Distance from arm_link_4 to arm_link_5
-    d = 0.13
-
-    j1 = 0.0
-    j2 = 0.0
-    j3 = 0.0
-    j4 = 0.0
-    j5 = 0.0
+class Kinematics:
+    def __init__(self):
+        pass
 
 
-    # Transform from frame 0 to frame 1
-    frame0_to_frame1 = kdl.Frame(kdl.Rotation.Identity(),  kdl.Vector(-l0x, 0.0, -l0z))
-    g1 = frame0_to_frame1 * g0
+    ALMOST_PLUS_ONE=0.9999999
+    ALMOST_MINUS_ONE=-0.9999999
+    ALMOST_ZERO=0.0000001
 
-    # First joint
-    j1 = math.atan2(g1.p.y(), g1.p.x())
-    if offset_joint_1:
-        if j1 < 0:
-            j1 += math.pi
-        else:
-            j1 -= math.pi
-
-    # Transform from frame 1 to frame 2
-    frame1_to_frame2 = kdl.Frame(kdl.Rotation.RPY(0,0,-j1), kdl.Vector(-l1x, 0.0 , -l1z))
-    g2 =frame1_to_frame2 * g1
-
-    # Project the frame into the plane of the arm
-    g2_proj = projectGoalOrientationIntoArmSubspace(g2)
+    min_angles_ = [math.radians(-169.0),math.radians(-90.0),math.radians(-146.0),math.radians(-102.0),math.radians(-167.0)]
+    max_angles_ = [math.radians(169.0),math.radians(65.0),math.radians(151.0),math.radians(102.0),math.radians(167.0)]
 
 
-    # Set all values in the frame that are close to zero to exactly zero
-    g2_proj = cleanFrame(g2_proj)
-
-    # Fifth joint, determines the roll of the gripper (= wrist angle)
-    s1 = math.sin(j1)
-    c1 = math.cos(j1)
-    r11 = g1.M[0, 0]
-    r12 = g1.M[0, 1]
-    r21 = g1.M[1, 0]
-    r22 = g1.M[1, 1]
-    j5 = math.atan2(r21 * c1 - r11 * s1, r22 * c1 - r12 * s1)
+    dh=list({'theta':0           ,'d':-0.05   ,'a':-0.23    ,'alpha':0               }, #from write plane to joint_1 (KS0)
+            {'theta':0           ,'d':0.147   ,'a':0.033    ,'alpha':math.pi/2       } ,#from KS0 to joint 2 (KS1)
+            {'theta':math.pi/2   ,'d':0       ,'a':0.155    ,'alpha':0               }, #from KS1 to joint 3 (KS2)
+            {'theta':0           ,'d':0       ,'a':0.135    ,'alpha':0               }, #from KS2 to joint 4 (KS3)
+            {'theta':math.pi/2   ,'d':0       ,'a':0        ,'alpha':math.pi/2       }, #from KS3 to joint 5 (KS4)
+            {'theta':0           ,'d':0.2175  ,'a':0        ,'alpha':0               }, #from KS4 to tcp
+            {'theta':0           ,'d':0.03    ,'a':0        ,'alpha':0               }) #from tcp to pencil
 
 
-    # The sum of joint angles two to four determines the overall "pitch" of the end effector
-    r13 = g2_proj.M[0, 2]
-    r33 = g2_proj.M[2, 2]
-    j234 = math.atan2(r13, r33)
-
-    p2 = g2_proj.p
-
-    # In the arm's subplane, offset from the end-effector to the fourth joint
-    p2.x(p2.x() - d * math.sin(j234))
-    p2.z(p2.z() - d * math.cos(j234))
+    def get_dh_transform(self, dh, theta=0):
+        trans = np.matrix((    (cos(dh['theta']+theta),    -sin(dh['theta']+theta)*cos(dh['alpha']),       sin(dh['theta']+theta)*sin(dh['alpha']),       dh['a'] *cos(dh['theta']+theta)),
+            (sin(dh['theta']+theta),                      cos(dh['theta']+theta)*cos(dh['alpha']),       -cos(dh['theta']+theta)*sin(dh['alpha']),       dh['a']*sin(dh['theta']+theta)),
+            (0,                                     sin(dh['alpha']),                         cos(dh['alpha']),                        dh['d']),
+            (0,                                     0,                                        0,                                       1)))
+        return trans
 
 
-    # Check if the goal position can be reached at all
-    if (l2 + l3) < math.sqrt((p2.x() * p2.x()) + (p2.z() * p2.z())):
-        return kdl.JntArray(0)
+    def get_inv_transform(self, dh, theta=0):
+        trans = np.matrix((  (cos(dh['theta']+theta),       sin(dh['theta']+theta),                         0,                                              -dh['a']),
+            (-sin(dh['theta']+theta)*cos(dh['alpha']),      cos(dh['theta']+theta)*cos(dh['alpha']),        sin(dh['alpha']),                               -dh['d']*sin(dh['alpha'])),
+            (sin(dh['alpha'])*sin(dh['theta']+theta),       -cos(dh['theta']+theta)*sin(dh['alpha']),       cos(dh['alpha']),                               -dh['d']*cos(dh['alpha'])),
+            (0,                                             0,                                              0,                                              1)))
+        return trans
 
-    # Third joint
-    l_sqr = (p2.x() * p2.x()) + (p2.z() * p2.z())
-    l2_sqr = l2 * l2
-    l3_sqr = l3 * l3
-    j3_cos = (l_sqr - l2_sqr - l3_sqr) / (2.0 * l2 * l3)
+    def offset2world(self, thetas):
+        return -thetas
 
-    if j3_cos > ALMOST_PLUS_ONE:
-        j3 = 0.0
-    elif j3_cos < ALMOST_MINUS_ONE:
-        j3 = math.pi
-    else:
-        j3 = math.atan2(math.sqrt(1.0 - (j3_cos * j3_cos)), j3_cos)
-
-    if offset_joint_3:
-        j3 = -j3
-
-    # Second joint
-    t1 = math.atan2(p2.z(), p2.x())
-    t2 = math.atan2(l3 * math.sin(j3), l2 + l3 * math.cos(j3))
-    j2 = (math.pi/2) - t1 - t2
-
-
-    # Fourth joint, determines the pitch of the gripper
-    j4 = j234 - j2 - j3
-
-
-    # This IK assumes that the arm points upwards, so we need to consider the offsets to the real home position
-    offset1 = math.radians( 169.0)
-    offset2 = math.radians(  65.0)
-    offset3 = math.radians(-146.0)
-    offset4 = math.radians( 102.5)
-    offset5 = math.radians( 167.5)
-
-    solution = kdl.JntArray(5)
-    solution[0] = (offset1 - j1)
-    solution[1] = (j2 + offset2)
-    solution[2] = (j3 + offset3)
-    solution[3] = (j4 + offset4)
-    solution[4] = (offset5 - j5)
-
-    for i in range(0,5):
-        while solution[i]>math.pi:
-            solution[i]=solution[i]-(math.pi*2)
-        while solution[i]<-math.pi:
-            solution[i]=solution[i]+(math.pi*2)
-
-
-
-    return solution
-
-
-def CartToJnt(p_in):
-    solutions = list()
-
-    bools = [ True , False ]
-    # iterate over all redundant solutions
-    for i in range(0,2):
-        for j in range(0,2):
-            solution = inverseKinematics(p_in, bools[i], bools[j])
-            if isSolutionValid(solution):
-                solutions.append(solution)
-
-    return solutions
-
-
-def isSolutionValid(solution):
-    if solution.rows() != 5:
-        return False
-    for i in range(0,solution.rows()):
-        if solution[i] < min_angles_[i] or solution[i] > max_angles_[i]:
-            return False
-
-    return True
-
-
-rospy.init_node('kinPublisher', anonymous=True)
-
-
-pub = rospy.Publisher('/youbot_rw/vrep/arm_joint1_target', Float64, queue_size=10)
-pub1 = rospy.Publisher('/youbot_rw/vrep/arm_joint2_target', Float64, queue_size=10)
-pub2 = rospy.Publisher('/youbot_rw/vrep/arm_joint3_target', Float64, queue_size=10)
-pub3 = rospy.Publisher('/youbot_rw/vrep/arm_joint4_target', Float64, queue_size=10)
-pub4 = rospy.Publisher('/youbot_rw/vrep/arm_joint5_target', Float64, queue_size=10)
-
-r = rospy.Rate(10) # 10hz
-dir=1
-val=0.5
-while not rospy.is_shutdown():
-    tmp=CartToJnt(kdl.Frame(  kdl.Rotation.Identity()  ,  kdl.Vector(0, 0, 0.5) ))
-    pub.publish(tmp[0][0])
-    pub1.publish(tmp[0][1])
-    pub2.publish(tmp[0][2])
-    pub3.publish(tmp[0][3])
-    pub4.publish(tmp[0][4])
-    print "Ergebnis:"
-    print tmp
-    if dir==1:
-        if val>1:
-            dir=0
-        val=val+0.1
-    else:
-        if val<0:
-            dir=1
-        val=val-0.1
-
-    #print val
-
-    r.sleep()
+    def direct_kin(self, thetas):
+        trans= self.get_dh_transform(self.dh[1],thetas[0]) * self.get_dh_transform(self.dh[2],thetas[1]) * \
+               self.get_dh_transform(self.dh[3],thetas[2]) * self.get_dh_transform(self.dh[4],thetas[3]) * \
+               self.get_dh_transform(self.dh[5],thetas[4])
+        return (trans*np.matrix((0,0,0,1)).transpose())[:3]

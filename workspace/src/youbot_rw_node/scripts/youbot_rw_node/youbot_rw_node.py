@@ -13,6 +13,7 @@ import numpy as np
 import robot_config as rc
 import KinematicFunctions as kf
 import MotionFunctions as mf
+import kinematics as kin
 
 
 import status_intf as status
@@ -56,6 +57,7 @@ class Node(object):
         self.status = 1 #0= error 1= no error
         self.status_string = "no error"
         self.status_vrep = 0 #0=doing nothing 1= in progress 2= movement done
+        self.kinematics = kin.Kinematics()
                 
         #do init here
 
@@ -113,6 +115,11 @@ class Node(object):
         print self.config_use_thetas
         if(self.config_use_thetas == 1 and self.config_use_pos == 0):
             self.send_vrep_joint_targets(self.config_thetas)
+            tmp = self.kinematics.offset2world(self.config_thetas)
+            self.config_pos = self.kinematics.direct_kin(tmp)
+
+            #todo: implement communication to gui
+
         #if(self.config_use_pos == 1 and self.config_use_thetas == 0):
             #todo: implement inverse kinematics
 
