@@ -3,6 +3,7 @@ import PyKDL as kdl
 import math
 import rospy
 import numpy as np
+from numpy import sin, cos
 
 from std_msgs.msg import Float64
 
@@ -34,6 +35,30 @@ def transform (g,a,alpha,d,theta):
     return tmp*g_3
 
 
+
+
+def get_transform(dh):
+    trans = np.matrix((cos(dh['theta']), -sin(dh['theta'])*cos(dh['alpha']), sin(dh['theta']*sin(dh['alpha'])),dh['a'] *cos(dh['theta'])),
+        (sin(dh['theta']),cos(dh['theta'])*cos(dh['alpha']),-cos(dh['theta'])*sin(dh['alpha']),dh['a']*sin(dh['theta'])),
+        (0, sin(dh['alpha']), cos(dh['alpha']), dh['d']),
+        (0,0,0,1))
+    return trans
+
+
+def get_transform(theta,a,d,alpha):
+    trans = np.matrix((cos(theta), -sin(theta)*cos(alpha), sin(theta*sin(alpha)),a *cos(theta)),
+        (sin(theta),cos(theta)*cos(alpha),-cos(theta)*sin(alpha),a*sin(theta)),
+        (0, sin(alpha), cos(alpha), d),
+        (0,0,0,1))
+    return trans
+
+
+def get_inv_transform(theta,a,d,alpha):
+    trans = np.matrix((cos(theta), sin(theta), 0, -a),
+        (-sin(theta)*cos(alpha), cos(theta)*cos(alpha),sin(alpha),-d*sin(alpha)),
+        (sin(alpha)*sin(theta), -cos(theta)*sin(alpha),cos(alpha), -d*cos(alpha)),
+        (0,0,0,1))
+    return trans
 
 
 
