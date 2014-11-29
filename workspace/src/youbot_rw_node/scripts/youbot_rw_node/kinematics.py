@@ -4,6 +4,8 @@ import math
 import numpy as np
 from numpy import sin, cos
 
+from numpy import sin, cos, arctan2, arccos
+from numpy.core.umath import arccos
 
 
 class Kinematics:
@@ -57,6 +59,15 @@ class Kinematics:
             (0,                                             0,                                              0,                                              1)))
         return trans
 
+
+    def get_transformation2wrist_point(self, alpha):
+        return np.matrix((  (cos(alpha),0,sin(alpha), 0),
+                    (0  ,   1   ,   0, 0),
+                    (-sin(alpha),   0,  cos(alpha), self.dh[5]['d']+self.dh[6]['d']),
+                    (0, 0, 0, 1)
+        ))
+
+
     def offset2world(self, thetas):
         """ todo
 
@@ -66,6 +77,7 @@ class Kinematics:
         :rtype: todo
         """
         return -thetas
+
 
     def direct_kin(self, thetas):
         """ todo
@@ -79,3 +91,120 @@ class Kinematics:
                self.get_dh_transform(self.dh[3],thetas[2]) * self.get_dh_transform(self.dh[4],thetas[3]) * \
                self.get_dh_transform(self.dh[5],thetas[4])
         return (trans*np.matrix((0,0,0,1)).transpose())[:3]
+
+
+    def inverse_kin( self, point ):
+        """ calculate the inverse kinematics
+
+        :param point on write plane, (x;y;z)
+        :type todo
+        :returns: possible solutions of inverse kinematic
+        :rtype: list of( arrays of floats)
+        """
+
+        print 'point', point
+        #point[2]=point[2]+dh[5]['d']+dh[6]['d']             # offset calculate Wrist point under condition that Wrist is vertical up on write plane
+        wp= np.matrix(np.resize(point,4)).transpose()
+        wp[3]=1
+        wp = self.get_transformation2wrist_point(45.0/180*np.pi) * wp
+        print 'wpoint',wp
+        wp_0=self.get_inv_transform(self.dh[0])*wp                    # transform wp into KS0
+        theta_0 = np.empty([2])
+        theta_0[0]=arctan2(wp_0[1],wp_0[0])                 # turn robot arm into wrist point plane
+
+        if theta_0[0] < 0:
+            theta_0[1]=theta_0[0]+np.pi
+        else:
+            theta_0[1]=theta_0[0]-np.pi
+        wp_1 = np.array([self.get_inv_transform(self.dh[1],theta_0[0])*wp_0, self.get_inv_transform(self.dh[1],theta_0[1])*wp_0])       # numpy array of 2 points
+
+        print theta_0
+        ##d_wp_1 = np.array((norm(wp_1[0]),norm(wp_1[1])))
+        ##print d_wp_1
+        d_wp_1 = np.array(( np.sqrt((wp_1[0][0]**2 + wp_1[0][1]**2)),np.sqrt((wp_1[1][0]**2 + wp_1[1][1]**2)) ))    # array of 2 distances
+        print d_wp_1
+
+        s=np.array([arctan2(wp_1[0][1],wp_1[0][0]),arctan2(wp_1[1][1],wp_1[1][0])])                                 # array of 2 angles
+        print  (self.dh[3]['a']**2-d_wp_1[0]**2-self.dh[2]['a']**2) / (-2*d_wp_1[0]*self.dh[2]['a'])
+        print  (self.dh[3]['a']**2-d_wp_1[1]**2-self.dh[2]['a']**2) / (-2*d_wp_1[1]*self.dh[2]['a'])
+        r=np.array([arccos( (self.dh[3]['a']**2-d_wp_1[0]**2-self.dh[2]['a']**2) / (-2*d_wp_1[0]*self.dh[2]['a']) ),
+                    arccos( (self.dh[3]['a']**2-d_wp_1[1]**2-self.dh[2]['a']**2) / (-2*d_wp_1[1]*self.dh[2]['a']) )])              # array of 2 angles
+
+        theta_1_0 = np.empty([2])                                                                                   #array of 2 angles
+        theta_1_1 = np.empty([2])                                                                                   #array of 2 angles
+
+        theta_1_0[0] =s[0]+r[0]
+        theta_1_0[1] =s[0]-r[0]
+        theta_1_1[0] =s[1]+r[1]
+        theta_1_1[1] =s[1]-r[1]
+
+        wp_2=  np.array([self.get_inv_transform(self.dh[2],theta_1_0[0])*wp_1[0], self.get_inv_transform(self.dh[2],theta_1_0[1])*wp_1[0] ,     # numpy array of 4 points
+                         self.get_inv_transform(self.dh[2],theta_1_1[0])*wp_1[1], self.get_inv_transform(self.dh[2],theta_1_1[1])*wp_1[1]])
+
+        theta_2_0 = np.empty([2])                                                                                   #array of 2 angles
+        theta_2_1 = np.empty([2])                                                                                   #array of 2 angles
+
+        theta_2_0[0] = arctan2(wp_2[0][1], wp_2[0][0])
+        theta_2_0[1] = arctan2(wp_2[1][1], wp_2[1][0])
+        theta_2_1[0] = arctan2(wp_2[2][1], wp_2[2][0])
+        theta_2_1[1] = arctan2(wp_2[3][1], wp_2[3][0])
+
+
+        wp_3=  np.array([self.get_inv_transform(self.dh[3],theta_2_0[0])*wp_2[0], self.get_inv_transform(self.dh[3],theta_2_0[1])*wp_2[0] ,     # numpy array of 4 points
+                         self.get_inv_transform(self.dh[3],theta_2_1[0])*wp_2[1], self.get_inv_transform(self.dh[3],theta_2_1[1])*wp_2[1]])
+
+        theta_3_0 = np.empty([2])                                                                                   #array of 2 angles
+        theta_3_1 = np.empty([2])                                                                                   #array of 2 angles
+
+        theta_3_0[0] = arctan2(wp_3[0][1], wp_3[0][0])
+        theta_3_0[1] = arctan2(wp_3[1][1], wp_3[1][0])
+        theta_3_1[0] = arctan2(wp_3[2][1], wp_3[2][0])
+        theta_3_1[1] = arctan2(wp_3[3][1], wp_3[3][0])
+
+
+
+        result = list()
+        result.append(np.array([ theta_0[0], theta_1_0[0], theta_2_0[0], theta_3_0[0], 0.0 ]))
+        result.append(np.array([ theta_0[0], theta_1_0[1], theta_2_0[1], theta_3_0[1], 0.0 ]))
+        result.append(np.array([ theta_0[1], theta_1_1[0], theta_2_1[0], theta_3_1[0], 0.0 ]))
+        result.append(np.array([ theta_0[1], theta_1_1[1], theta_2_1[1], theta_3_1[1], 0.0 ]))
+
+        for i in result:
+            print i/np.pi*180.
+            print self.isSolutionValid(i)
+        return result
+
+
+    def isSolutionValid(self, solution):
+        """ todo
+
+        :param todo
+        :type todo
+        :returns: todo
+        :rtype: todo
+        """
+        if len(solution) != 5:
+            return False
+        for i in range(0,len(solution)):
+            if solution[i] < self.min_angles_[i] or solution[i] > self.max_angles_[i]:
+                return False
+
+        return True
+
+
+    def get_valid_inverse_kin_solutions(self, point):
+        """ todo
+
+        :param todo
+        :type todo
+        :returns: todo
+        :rtype: todo
+        """
+        ik_solutions = self.inverse_kin(point)
+
+        valid_solutions = list()
+        for i in ik_solutions:
+            if self.isSolutionValid(i) == True:
+                valid_solutions.append(i)
+
+        return valid_solutions

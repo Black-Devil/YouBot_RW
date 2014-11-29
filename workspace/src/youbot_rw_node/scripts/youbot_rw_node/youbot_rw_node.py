@@ -111,6 +111,7 @@ class Node(object):
         self.time = rospy.get_time()
         self.parse_input_from_gui(msg)
         self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "received write command")
+
 	    #DO WRITING WITH ROBOT HERE
         print self.config_use_thetas
         if(self.config_use_thetas == 1 and self.config_use_pos == 0):
@@ -120,8 +121,10 @@ class Node(object):
 
             #todo: implement communication to gui
 
-        #if(self.config_use_pos == 1 and self.config_use_thetas == 0):
-            #todo: implement inverse kinematics
+        if(self.config_use_pos == 1 and self.config_use_thetas == 0):
+            #todo: check if position is in the right coordinate system
+            tmpPos = np.matrix((self.config_pos[0],  self.config_pos[1],  self.config_pos[2])).transpose()
+            self.kinematics.get_valid_inverse_kin_solutions()
 
 	
 	    #self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "movement in progress")
