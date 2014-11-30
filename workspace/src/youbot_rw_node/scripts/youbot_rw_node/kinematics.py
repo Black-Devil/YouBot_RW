@@ -17,17 +17,16 @@ class Kinematics:
     ALMOST_MINUS_ONE=-0.9999999
     ALMOST_ZERO=0.0000001
 
-    min_angles_ = [math.radians(-169.0),math.radians(-90.0),math.radians(-146.0),math.radians(-102.0),math.radians(-167.0)]
+    min_angles_ = [math.radians(-169.0),math.radians(9-0.0),math.radians(-146.0),math.radians(-102.0),math.radians(-167.0)]
     max_angles_ = [math.radians(169.0),math.radians(65.0),math.radians(151.0),math.radians(102.0),math.radians(167.0)]
 
-
-    dh=list({'theta':0           ,'d':-0.05   ,'a':-0.23    ,'alpha':0               }, #from write plane to joint_1 (KS0)
-            {'theta':0           ,'d':0.147   ,'a':0.033    ,'alpha':math.pi/2       } ,#from KS0 to joint 2 (KS1)
-            {'theta':math.pi/2   ,'d':0       ,'a':0.155    ,'alpha':0               }, #from KS1 to joint 3 (KS2)
-            {'theta':0           ,'d':0       ,'a':0.135    ,'alpha':0               }, #from KS2 to joint 4 (KS3)
-            {'theta':math.pi/2   ,'d':0       ,'a':0        ,'alpha':math.pi/2       }, #from KS3 to joint 5 (KS4)
-            {'theta':0           ,'d':0.2175  ,'a':0        ,'alpha':0               }, #from KS4 to tcp
-            {'theta':0           ,'d':0.03    ,'a':0        ,'alpha':0               }) #from tcp to pencil
+    dh=list(({'theta':0.0           ,'d':-0.055   ,'a':0.35    ,'alpha':0.0               }, #from write plane to joint_1 (KS0)
+            {'theta':0.0           ,'d':0.147   ,'a':0.033    ,'alpha':math.pi/2       } ,#from KS0 to joint 2 (KS1)
+            {'theta':math.pi/2   ,'d':0.0       ,'a':0.155    ,'alpha':0.0               }, #from KS1 to joint 3 (KS2)
+            {'theta':0.0           ,'d':0.0       ,'a':0.135    ,'alpha':0.0               }, #from KS2 to joint 4 (KS3)
+            {'theta':math.pi/2   ,'d':0.0       ,'a':0.0        ,'alpha':math.pi/2       }, #from KS3 to joint 5 (KS4)
+            {'theta':0.0           ,'d':0.2175  ,'a':0.0        ,'alpha':0.0               }, #from KS4 to tcp
+            {'theta':0.0           ,'d':0.02    ,'a':0.0        ,'alpha':0.0               })) #from tcp to pencil
 
 
     def get_dh_transform(self, dh, theta=0):
@@ -79,7 +78,7 @@ class Kinematics:
         return -thetas
 
 
-    def direct_kin(self, thetas):
+    def direct_kin(self, thetas, bogen):
         """ todo
 
         :param todo
@@ -87,10 +86,17 @@ class Kinematics:
         :returns: todo
         :rtype: todo
         """
-        trans= self.get_dh_transform(self.dh[1],thetas[0]) * self.get_dh_transform(self.dh[2],thetas[1]) * \
-               self.get_dh_transform(self.dh[3],thetas[2]) * self.get_dh_transform(self.dh[4],thetas[3]) * \
-               self.get_dh_transform(self.dh[5],thetas[4])
-        return (trans*np.matrix((0,0,0,1)).transpose())[:3]
+        if bogen:
+            trans=  self.get_dh_transform(self.dh[0],0.0) * \
+                    self.get_dh_transform(self.dh[1],thetas[0]) * self.get_dh_transform(self.dh[2],thetas[1]) * \
+                    self.get_dh_transform(self.dh[3],thetas[2]) * self.get_dh_transform(self.dh[4],thetas[3]) * \
+                    self.get_dh_transform(self.dh[5],thetas[4]) * self.get_dh_transform(self.dh[6],0.0)
+        else:
+            trans=  self.get_dh_transform(self.dh[0],0.0) * \
+                    self.get_dh_transform(self.dh[1],math.radians(thetas[0])) * self.get_dh_transform(self.dh[2],math.radians(thetas[1])) * \
+                    self.get_dh_transform(self.dh[3],math.radians(thetas[2])) * self.get_dh_transform(self.dh[4],math.radians(thetas[3])) * \
+                    self.get_dh_transform(self.dh[5],math.radians(thetas[4])) * self.get_dh_transform(self.dh[6],0.0)
+        return (trans*( np.matrix((0,0,0,1)).transpose() ))[:3]
 
 
     def inverse_kin( self, point ):
@@ -102,12 +108,10 @@ class Kinematics:
         :rtype: list of( arrays of floats)
         """
 
-        print 'point', point
-        #point[2]=point[2]+dh[5]['d']+dh[6]['d']             # offset calculate Wrist point under condition that Wrist is vertical up on write plane
         wp= np.matrix(np.resize(point,4)).transpose()
-        wp[3]=1
-        wp = self.get_transformation2wrist_point(45.0/180*np.pi) * wp
-        print 'wpoint',wp
+        wp[3]=1                                                         # make homogenous coordinates
+        wp = self.get_transformation2wrist_point(45.0/180*np.pi) * wp   # offset calculate Wrist point under condition that Wrist is 45degree up on write plane
+        print "wpoint: [%.4f; %.4f; %.4f]" % (wp[0],wp[1],wp[2])
         wp_0=self.get_inv_transform(self.dh[0])*wp                    # transform wp into KS0
         theta_0 = np.empty([2])
         theta_0[0]=arctan2(wp_0[1],wp_0[0])                 # turn robot arm into wrist point plane
@@ -118,15 +122,14 @@ class Kinematics:
             theta_0[1]=theta_0[0]-np.pi
         wp_1 = np.array([self.get_inv_transform(self.dh[1],theta_0[0])*wp_0, self.get_inv_transform(self.dh[1],theta_0[1])*wp_0])       # numpy array of 2 points
 
-        print theta_0
-        ##d_wp_1 = np.array((norm(wp_1[0]),norm(wp_1[1])))
+        #print theta_0
         ##print d_wp_1
         d_wp_1 = np.array(( np.sqrt((wp_1[0][0]**2 + wp_1[0][1]**2)),np.sqrt((wp_1[1][0]**2 + wp_1[1][1]**2)) ))    # array of 2 distances
-        print d_wp_1
+        #print d_wp_1
 
         s=np.array([arctan2(wp_1[0][1],wp_1[0][0]),arctan2(wp_1[1][1],wp_1[1][0])])                                 # array of 2 angles
-        print  (self.dh[3]['a']**2-d_wp_1[0]**2-self.dh[2]['a']**2) / (-2*d_wp_1[0]*self.dh[2]['a'])
-        print  (self.dh[3]['a']**2-d_wp_1[1]**2-self.dh[2]['a']**2) / (-2*d_wp_1[1]*self.dh[2]['a'])
+        #print  (self.dh[3]['a']**2-d_wp_1[0]**2-self.dh[2]['a']**2) / (-2*d_wp_1[0]*self.dh[2]['a'])
+        #print  (self.dh[3]['a']**2-d_wp_1[1]**2-self.dh[2]['a']**2) / (-2*d_wp_1[1]*self.dh[2]['a'])
         r=np.array([arccos( (self.dh[3]['a']**2-d_wp_1[0]**2-self.dh[2]['a']**2) / (-2*d_wp_1[0]*self.dh[2]['a']) ),
                     arccos( (self.dh[3]['a']**2-d_wp_1[1]**2-self.dh[2]['a']**2) / (-2*d_wp_1[1]*self.dh[2]['a']) )])              # array of 2 angles
 
@@ -170,8 +173,8 @@ class Kinematics:
         result.append(np.array([ theta_0[1], theta_1_1[1], theta_2_1[1], theta_3_1[1], 0.0 ]))
 
         for i in result:
-            print i/np.pi*180.
-            print self.isSolutionValid(i)
+            print "[%.4f; %.4f; %.4f; %.4f; %.4f;]" % (math.degrees(i[0]), math.degrees(i[1]), math.degrees(i[2]), math.degrees(i[3]), math.degrees(i[4]) ) , self.isSolutionValid(i)
+            #print self.isSolutionValid(i)
         return result
 
 
@@ -186,7 +189,9 @@ class Kinematics:
         if len(solution) != 5:
             return False
         for i in range(0,len(solution)):
-            if solution[i] < self.min_angles_[i] or solution[i] > self.max_angles_[i]:
+            if math.isnan(solution[i]):
+                return False
+            elif solution[i] < self.min_angles_[i] or solution[i] > self.max_angles_[i]:
                 return False
 
         return True

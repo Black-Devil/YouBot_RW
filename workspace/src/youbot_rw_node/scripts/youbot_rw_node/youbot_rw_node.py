@@ -85,13 +85,20 @@ class Node(object):
         self.spin_count -= 1
 
 
-    def send_vrep_joint_targets(self, trgts):
+    def send_vrep_joint_targets(self, trgts, bogen):
         rospy.loginfo("send vrep joint targets")
-        trgts_bogen = np.array([(((2.*np.pi)/360.)*trgts[0]),
-                                (((2.*np.pi)/360.)*trgts[1]),
-                                (((2.*np.pi)/360.)*trgts[2]),
-                                (((2.*np.pi)/360.)*trgts[3]),
-                                (((2.*np.pi)/360.)*trgts[4])])
+        if bogen:
+            trgts_bogen = np.array([(trgts[0]),
+                                (trgts[1]),
+                                (trgts[2]),
+                                (trgts[3]),
+                                (trgts[4])])
+        else:
+            trgts_bogen = np.array([(((2.*np.pi)/360.)*trgts[0]),
+                                    (((2.*np.pi)/360.)*trgts[1]),
+                                    (((2.*np.pi)/360.)*trgts[2]),
+                                    (((2.*np.pi)/360.)*trgts[3]),
+                                    (((2.*np.pi)/360.)*trgts[4])])
 
         self.pub2vrep_joint_1_trgt.publish(trgts_bogen[0])
         self.pub2vrep_joint_2_trgt.publish(trgts_bogen[1])
@@ -113,18 +120,26 @@ class Node(object):
         self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "received write command")
 
 	    #DO WRITING WITH ROBOT HERE
-        print self.config_use_thetas
+        #print self.config_use_thetas
         if(self.config_use_thetas == 1 and self.config_use_pos == 0):
-            self.send_vrep_joint_targets(self.config_thetas)
             tmp = self.kinematics.offset2world(self.config_thetas)
-            self.config_pos = self.kinematics.direct_kin(tmp)
-
+            self.send_vrep_joint_targets(tmp, False)
+            self.config_pos = self.kinematics.direct_kin(tmp, False)
+            print("pos: [%.4f; %.4f; %.4f]" % (self.config_pos[0],self.config_pos[1],self.config_pos[2]) )
             #todo: implement communication to gui
 
         if(self.config_use_pos == 1 and self.config_use_thetas == 0):
-            #todo: check if position is in the right coordinate system
+
             tmpPos = np.matrix((self.config_pos[0],  self.config_pos[1],  self.config_pos[2])).transpose()
-            self.kinematics.get_valid_inverse_kin_solutions()
+            print "input ik", tmpPos
+            valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(tmpPos)
+            if not valid_ik_solutions:
+                print "no valid ik solution possible!"
+            else:
+                print "first valid ik solution:"  '{0:.4f}'.format(valid_ik_solutions[0])
+                self.send_vrep_joint_targets(valid_ik_solutions[0], True)
+                tmp = self.kinematics.offset2world(valid_ik_solutions[0])
+                #send tmp to GUI
 
 	
 	    #self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "movement in progress")
