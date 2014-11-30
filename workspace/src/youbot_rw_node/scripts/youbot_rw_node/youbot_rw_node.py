@@ -123,10 +123,11 @@ class Node(object):
         #print self.config_use_thetas
         if(self.config_use_thetas == 1 and self.config_use_pos == 0):
             tmp = self.kinematics.offset2world(self.config_thetas)
+            # TODO: check angle constrains
             self.send_vrep_joint_targets(tmp, False)
             self.config_pos = self.kinematics.direct_kin(tmp, False)
             print("pos: [%.4f; %.4f; %.4f]" % (self.config_pos[0],self.config_pos[1],self.config_pos[2]) )
-            #todo: implement communication to gui
+            # todo: implement communication to gui
 
         if(self.config_use_pos == 1 and self.config_use_thetas == 0):
 

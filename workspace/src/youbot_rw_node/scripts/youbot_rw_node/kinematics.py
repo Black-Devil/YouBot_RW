@@ -17,7 +17,7 @@ class Kinematics:
     ALMOST_MINUS_ONE=-0.9999999
     ALMOST_ZERO=0.0000001
 
-    min_angles_ = [math.radians(-169.0),math.radians(9-0.0),math.radians(-146.0),math.radians(-102.0),math.radians(-167.0)]
+    min_angles_ = [math.radians(-169.0),math.radians(-90.0),math.radians(-146.0),math.radians(-102.0),math.radians(-167.0)]
     max_angles_ = [math.radians(169.0),math.radians(65.0),math.radians(151.0),math.radians(102.0),math.radians(167.0)]
 
     dh=list(({'theta':0.0           ,'d':-0.055   ,'a':0.35    ,'alpha':0.0               }, #from write plane to joint_1 (KS0)
@@ -111,8 +111,9 @@ class Kinematics:
         wp= np.matrix(np.resize(point,4)).transpose()
         wp[3]=1                                                         # make homogenous coordinates
         wp = self.get_transformation2wrist_point(45.0/180*np.pi) * wp   # offset calculate Wrist point under condition that Wrist is 45degree up on write plane
-        print "wpoint: [%.4f; %.4f; %.4f]" % (wp[0],wp[1],wp[2])
+        print "wpoint: [%.4f; %.4f; %.4f; %.4f]" % (wp[0],wp[1],wp[2], wp[3])
         wp_0=self.get_inv_transform(self.dh[0])*wp                    # transform wp into KS0
+        print "wp_0: [%.4f; %.4f; %.4f; %.4f]" % (wp_0[0],wp_0[1],wp_0[2], wp_0[3])
         theta_0 = np.empty([2])
         theta_0[0]=arctan2(wp_0[1],wp_0[0])                 # turn robot arm into wrist point plane
 
@@ -120,12 +121,14 @@ class Kinematics:
             theta_0[1]=theta_0[0]+np.pi
         else:
             theta_0[1]=theta_0[0]-np.pi
-        wp_1 = np.array([self.get_inv_transform(self.dh[1],theta_0[0])*wp_0, self.get_inv_transform(self.dh[1],theta_0[1])*wp_0])       # numpy array of 2 points
+        print "theta_0: [%.4f; %.4f]" % (math.degrees(theta_0[0]),math.degrees(theta_0[1]))
 
-        #print theta_0
-        ##print d_wp_1
+        wp_1 = np.array([self.get_inv_transform(self.dh[1],theta_0[0])*wp_0, self.get_inv_transform(self.dh[1],theta_0[1])*wp_0])       # numpy array of 2 points
+        print "wp_1_0: [%.4f; %.4f; %.4f; %.4f]" % (wp_1[0][0],wp_1[0][1],wp_1[0][2], wp_1[0][3])
+        print "wp_1_1: [%.4f; %.4f; %.4f; %.4f]" % (wp_1[1][0],wp_1[1][1],wp_1[1][2], wp_1[1][3])
+
         d_wp_1 = np.array(( np.sqrt((wp_1[0][0]**2 + wp_1[0][1]**2)),np.sqrt((wp_1[1][0]**2 + wp_1[1][1]**2)) ))    # array of 2 distances
-        #print d_wp_1
+        print "d_wp_1: ", d_wp_1
 
         s=np.array([arctan2(wp_1[0][1],wp_1[0][0]),arctan2(wp_1[1][1],wp_1[1][0])])                                 # array of 2 angles
         #print  (self.dh[3]['a']**2-d_wp_1[0]**2-self.dh[2]['a']**2) / (-2*d_wp_1[0]*self.dh[2]['a'])
