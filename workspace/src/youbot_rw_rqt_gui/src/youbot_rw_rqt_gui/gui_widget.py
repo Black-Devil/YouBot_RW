@@ -40,6 +40,7 @@ from python_qt_binding import loadUi
 from python_qt_binding.QtCore import *#Qt, qWarning, Signal
 from python_qt_binding.QtGui import *#QFileDialog, QIcon, QWidget
 
+from youbot_rw_rqt_gui.msg import *
 from std_msgs.msg import *
 
 import status_intf as status
@@ -65,8 +66,8 @@ class YouBotGuiWidget(QWidget):
         loadUi(ui_file, self)
         
         #self.my_node = rospy.init_node('youbot_rw_gui_node')
-        self.pub_write_cmd = rospy.Publisher('/youbot_rw/gui2node', String, tcp_nodelay=True,queue_size=1)
-        rospy.Subscriber('/youbot_rw/node2gui', String, self.callback_status_cmd)
+        self.pub_write_cmd = rospy.Publisher('/youbot_rw/gui2node', rw_node, tcp_nodelay=True,queue_size=1)
+        rospy.Subscriber('/youbot_rw/node2gui', rw_node_state, self.callback_status_cmd)
 
         self.setObjectName('YouBot_RW_GUI')
         
@@ -115,48 +116,33 @@ class YouBotGuiWidget(QWidget):
         event.accept()   
 
 
-    def _handle_write_clicked(self):		        
-
-        if(self.use_thetas_checkBox.isChecked()):
-            useThetasTmp = "1"
-        else:
-            useThetasTmp = "0"
-        if(self.use_pos_checkBox.isChecked()):
-            usePosTmp = "1"
-        else:
-            usePosTmp = "0"
-
-        #set config: [Fontsize;PencilLength;UseThetas;Theta_1;Theta_2;Theta_3;Theta_4;Theta_5;UsePos;Pos_X;Pos_Y;Pos_Z]
-        commandStr = "config:" + str(self.fontsize_spinBox.value()) + ";" + str(self.pencilLength_doubleSpinBox.value())\
-                     + ";" + useThetasTmp + ";" + str(self.theta_1_doubleSpinBox.value())\
-                                                + ";" + str(self.theta_2_doubleSpinBox.value())\
-                                                + ";" + str(self.theta_3_doubleSpinBox.value())\
-                                                + ";" + str(self.theta_4_doubleSpinBox.value())\
-                                                + ";" + str(self.theta_5_doubleSpinBox.value())\
-                     + ";" + usePosTmp + ";" + str(self.pos_x_doubleSpinBox.value())\
-                                              + ";" + str(self.pos_y_doubleSpinBox.value())\
-                                              + ";" + str(self.pos_z_doubleSpinBox.value())\
-        
-        #set text data
-        commandStr = commandStr + "#data:" + str(self.plainTextEdit_writeContent.toPlainText())
-        self.pub_write_cmd.publish(commandStr)    
+    def _handle_write_clicked(self):
+        msg=rw_node()
+        msg.UseThetas=self.use_thetas_checkBox.isChecked()
+        msg.UsePos=self.use_pos_checkBox.isChecked()
+        msg.Theta_1=self.theta_1_doubleSpinBox.value()
+        msg.Theta_2=self.theta_2_doubleSpinBox.value()
+        msg.Theta_3=self.theta_3_doubleSpinBox.value()
+        msg.Theta_4=self.theta_4_doubleSpinBox.value()
+        msg.Theta_5=self.theta_5_doubleSpinBox.value()
+        msg.Pos_X=self.pos_x_doubleSpinBox.value()
+        msg.Pos_Y=self.pos_y_doubleSpinBox.value()
+        msg.Pos_Z=self.pos_z_doubleSpinBox.value()
+        msg.letters=str(self.plainTextEdit_writeContent.toPlainText())
+        self.pub_write_cmd.publish(msg)
         
         
     def callback_status_cmd(self,msg):                       
-        
-        cmd_list = msg.data.split("#", 1)        	
+	    #CONFIG
+	    self.status_node_status = msg.nodestatus
+	    self.status_vrep_status = msg.vrepstatus
 	
-	#CONFIG
-	self.status_list_string = (cmd_list[0].replace("status:", "", 1)).split(";")
-	self.status_node_status = int(self.status_list_string[0])
-	self.status_vrep_status = int(self.status_list_string[1])	
-	
-	#DATA
-	self.status_data_string = cmd_list[1].replace("error:", "", 1)
+	    #DATA
+	    self.status_data_string = msg.error
 	
 	
-	if self.status_node_status == status.STATUS_NODE_NO_ERROR:	    
-	    self.set_status_text.emit(self.status_data_string)
+	    if self.status_node_status == status.STATUS_NODE_NO_ERROR:
+	        self.set_status_text.emit(self.status_data_string)
                 
     
 

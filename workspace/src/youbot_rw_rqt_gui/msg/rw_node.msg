@@ -1,0 +1,13 @@
+float64 	Fontsize
+float64 	PencilLength
+bool 		UseThetas
+float64 	Theta_1
+float64 	Theta_2
+float64 	Theta_3
+float64 	Theta_4
+float64 	Theta_5
+bool 		UsePos
+float64 	Pos_X
+float64 	Pos_Y
+float64 	Pos_Z
+string 		letters

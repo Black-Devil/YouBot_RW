@@ -17,6 +17,8 @@ import kinematics as kin
 
 
 import status_intf as status
+from youbot_rw_rqt_gui.msg import *
+
 
 class Node(object):
     def __init__(self):
@@ -36,8 +38,8 @@ class Node(object):
         self.spin_count = 0
         self.r = rospy.Rate(self.rate)
         
-        rospy.Subscriber('/youbot_rw/gui2node', String, self.callback_write_cmd)
-        self.pub2gui = rospy.Publisher('/youbot_rw/node2gui', String, tcp_nodelay=True,queue_size=1)
+        rospy.Subscriber('/youbot_rw/gui2node', rw_node, self.callback_write_cmd)
+        self.pub2gui = rospy.Publisher('/youbot_rw/node2gui', rw_node_state, tcp_nodelay=True,queue_size=1)
         # Publisher for vrep interface
         self.pub2vrep_joint_1_trgt = rospy.Publisher('/youbot_rw/vrep/arm_joint1_target', Float64, tcp_nodelay=True,queue_size=1)
         self.pub2vrep_joint_2_trgt = rospy.Publisher('/youbot_rw/vrep/arm_joint2_target', Float64, tcp_nodelay=True,queue_size=1)
@@ -206,37 +208,35 @@ class Node(object):
         
         
     def parse_input_from_gui(self, msg):
-        cmd_list = msg.data.split("#", 1)
 
         #CONFIG
-        self.config_list_string = (cmd_list[0].replace("config:", "", 1)).split(";")
-        self.config_fontsize = int(self.config_list_string[0])
-        self.config_pencil_length = float(self.config_list_string[1])
-        self.config_use_thetas = int(self.config_list_string[2])
-        self.config_thetas = np.array([(float(self.config_list_string[3])),\
-            (float(self.config_list_string[4])),\
-            (float(self.config_list_string[5])),\
-            (float(self.config_list_string[6])),\
-            (float(self.config_list_string[7])),])
+        self.config_fontsize = int(msg.Fontsize)
+        self.config_pencil_length = float(msg.PencilLength)
+        self.config_use_thetas = int(msg.UseThetas)
+        self.config_thetas = np.array([msg.Theta_1,
+            msg.Theta_2,
+            msg.Theta_3,
+            msg.Theta_4,
+            msg.Theta_5])
 
-        self.config_use_pos = int(self.config_list_string[8])
-        self.config_pos = np.array([(float(self.config_list_string[9])),\
-            (float(self.config_list_string[10])),\
-            (float(self.config_list_string[11]))])
+        self.config_use_pos = int(msg.UsePos)
+        self.config_pos = np.array([msg.Pos_X,
+            msg.Pos_X,
+            msg.Pos_X])
 
         #DATA
-        self.data_string = cmd_list[1].replace("data:", "", 1)
+        self.data_string = msg.letters
     
     def send_status2gui(self, nodestatus, vrepstatus, error_txt):
+        msg=rw_node_state()
+        msg.nodestatus=nodestatus
+        msg.vrepstatus=vrepstatus
+        msg.error=error_txt
         self.status = nodestatus
         self.status_vrep = vrepstatus
         self.status_string = error_txt
         #set status: [nodestatus;vrepstatus;]
-        commandStr = "status:" + str(self.status) + ";" + str(self.status_vrep)
-        
-        #set error text
-        commandStr = commandStr + "#error:" + self.status_string        
-        self.pub2gui.publish(commandStr)
+        self.pub2gui.publish(msg)
         
         rospy.loginfo("send status 2 gui")
         #rospy.loginfo(commandStr)
