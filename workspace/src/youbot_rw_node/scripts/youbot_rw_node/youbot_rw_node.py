@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from time import sleep, time
-#import math
+import math
 import threading
 
 import rospy
@@ -129,19 +129,27 @@ class Node(object):
             self.send_vrep_joint_targets(tmp, False)
             self.config_pos = self.kinematics.direct_kin(tmp, False)
             print("pos: [%.4f; %.4f; %.4f]" % (self.config_pos[0],self.config_pos[1],self.config_pos[2]) )
+            pos_wp = self.kinematics.direct_kin_2_wristPoint(tmp, False)
+            print("pos_wp: [%.4f; %.4f; %.4f]" % (pos_wp[0],pos_wp[1],pos_wp[2]) )
             # todo: implement communication to gui
 
         if(self.config_use_pos == 1 and self.config_use_thetas == 0):
-
+            #self.kinematics.debugTheta_1(wp_1 = np.matrix((0.145,  0.145,  0.0, 1.0)).transpose())
+            #self.kinematics.debugTheta_1(wp_1 = np.matrix((-0.145,  0.145,  0.0, 1.0)).transpose())
+            #self.kinematics.debugTheta_1(wp_1 = np.matrix((-0.145,   0.048,  0.0, 1.0)).transpose())
+            #self.kinematics.debugTheta_1(wp_1 = np.matrix((-0.145,  -0.048,  0.0, 1.0)).transpose())
             tmpPos = np.matrix((self.config_pos[0],  self.config_pos[1],  self.config_pos[2])).transpose()
-            print "input ik", tmpPos
+            #print "input ik", tmpPos
             valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(tmpPos)
             if not valid_ik_solutions:
                 print "no valid ik solution possible!"
             else:
-                print "first valid ik solution:"  '{0:.4f}'.format(valid_ik_solutions[0])
+                print "valid ik solution possible!"
+                print "first valid ik solution: [%.4f; %.4f; %.4f; %.4f; %.4f;]" % (math.degrees(valid_ik_solutions[0][0]), math.degrees(valid_ik_solutions[0][1]), math.degrees(valid_ik_solutions[0][2]), math.degrees(valid_ik_solutions[0][3]), math.degrees(valid_ik_solutions[0][4]) ) , self.kinematics.isSolutionValid(valid_ik_solutions[0])
+                dk_pos = self.kinematics.direct_kin(valid_ik_solutions[0], True)
+                print "dk_pos: [%.4f; %.4f; %.4f]" % (dk_pos[0],dk_pos[1],dk_pos[2])
                 self.send_vrep_joint_targets(valid_ik_solutions[0], True)
-                tmp = self.kinematics.offset2world(valid_ik_solutions[0])
+                #tmp = self.kinematics.offset2world(valid_ik_solutions[0])
                 #send tmp to GUI
 
 	
