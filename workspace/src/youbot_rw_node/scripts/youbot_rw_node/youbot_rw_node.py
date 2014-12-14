@@ -142,12 +142,12 @@ class Node(object):
             #print "input ik", tmpPos
             valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(tmpPos)
             if not valid_ik_solutions:
-                print "no valid ik solution possible!"
+                print "// no valid ik solution possible! //"
             else:
-                print "valid ik solution possible!"
-                print "first valid ik solution: [%.4f; %.4f; %.4f; %.4f; %.4f;]" % (math.degrees(valid_ik_solutions[0][0]), math.degrees(valid_ik_solutions[0][1]), math.degrees(valid_ik_solutions[0][2]), math.degrees(valid_ik_solutions[0][3]), math.degrees(valid_ik_solutions[0][4]) ) , self.kinematics.isSolutionValid(valid_ik_solutions[0])
-                dk_pos = self.kinematics.direct_kin(valid_ik_solutions[0], True)
-                print "dk_pos: [%.4f; %.4f; %.4f]" % (dk_pos[0],dk_pos[1],dk_pos[2])
+                print "// valid ik solution possible! //"
+                #print "first valid ik solution: [%.4f; %.4f; %.4f; %.4f; %.4f;]" % (math.degrees(valid_ik_solutions[0][0]), math.degrees(valid_ik_solutions[0][1]), math.degrees(valid_ik_solutions[0][2]), math.degrees(valid_ik_solutions[0][3]), math.degrees(valid_ik_solutions[0][4]) ) , self.kinematics.isSolutionValid(valid_ik_solutions[0])
+                #dk_pos = self.kinematics.direct_kin(valid_ik_solutions[0], True)
+                #print "dk_pos: [%.4f; %.4f; %.4f]" % (dk_pos[0],dk_pos[1],dk_pos[2])
                 self.send_vrep_joint_targets(valid_ik_solutions[0], True)
                 #tmp = self.kinematics.offset2world(valid_ik_solutions[0])
                 #send tmp to GUI
@@ -229,8 +229,8 @@ class Node(object):
 
         self.config_use_pos = int(msg.UsePos)
         self.config_pos = np.array([msg.Pos_X,
-            msg.Pos_X,
-            msg.Pos_X])
+            msg.Pos_Y,
+            msg.Pos_Z])
 
         #DATA
         self.data_string = msg.letters
