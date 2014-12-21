@@ -10,6 +10,9 @@ from scipy.optimize import minimize
 
 from numpy.core.umath import arccos
 
+import rospy
+from std_msgs.msg import Float64
+
 
 class Kinematics:
     destination_point = np.array([0, 0, 0])
@@ -180,6 +183,7 @@ class Kinematics:
 
 
         if self.checkSolution(erg):
+            print "Yes"
             return erg
         else:
             init_res=10
@@ -241,9 +245,27 @@ class Kinematics:
 
 test = Kinematics()
 
+
+rospy.init_node('kinPublisher', anonymous=True)
+
+
+pub = rospy.Publisher('/youbot_rw/vrep/arm_joint1_target', Float64, queue_size=10)
+pub1 = rospy.Publisher('/youbot_rw/vrep/arm_joint2_target', Float64, queue_size=10)
+pub2 = rospy.Publisher('/youbot_rw/vrep/arm_joint3_target', Float64, queue_size=10)
+pub3 = rospy.Publisher('/youbot_rw/vrep/arm_joint4_target', Float64, queue_size=10)
+pub4 = rospy.Publisher('/youbot_rw/vrep/arm_joint5_target', Float64, queue_size=10)
+
 # erg = test.step_to_point([0,0,0])
 
 
-for i in xrange(0, 100, 1):
-    erg = test.step_to_point([-0.05, 0.0 + i / 100., 0])
-    # print erg
+for i in xrange(0, 1000, 1):
+    erg = test.step_to_point([-0.05+i/1000., 0.0, 0.04])
+    if erg is not None:
+        for i in xrange(0,10,1):
+            pub.publish(erg[0])
+            pub1.publish(erg[1])
+            pub2.publish(erg[2])
+            pub3.publish(erg[3])
+            pub4.publish(erg[4])
+    print erg
+    sleep(0.1)
