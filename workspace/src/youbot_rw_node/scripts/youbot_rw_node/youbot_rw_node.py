@@ -10,10 +10,7 @@ from sensor_msgs.msg import *
 
 import numpy as np
 
-import robot_config as rc
-import KinematicFunctions as kf
-import MotionFunctions as mf
-import kinematics as kin
+import kinematics_geom as kin
 
 
 import status_intf as status
@@ -59,7 +56,7 @@ class Node(object):
         self.status = 1 #0= error 1= no error
         self.status_string = "no error"
         self.status_vrep = 0 #0=doing nothing 1= in progress 2= movement done
-        self.kinematics = kin.Kinematics()
+        self.kinematics = kin.Kinematics_geom()
                 
         #do init here
 
@@ -127,9 +124,9 @@ class Node(object):
             tmp = self.kinematics.offset2world(self.config_thetas)
             # TODO: check angle constrains
             self.send_vrep_joint_targets(tmp, False)
-            self.config_pos = self.kinematics.direct_kin(tmp, False)
+            self.config_pos = self.kinematics.direct_kin(np.deg2rad(tmp))
             print("pos: [%.4f; %.4f; %.4f]" % (self.config_pos[0],self.config_pos[1],self.config_pos[2]) )
-            pos_wp = self.kinematics.direct_kin_2_wristPoint(tmp, False)
+            pos_wp = self.kinematics.direct_kin_2_wristPoint(np.deg2rad(tmp))
             print("pos_wp: [%.4f; %.4f; %.4f]" % (pos_wp[0],pos_wp[1],pos_wp[2]) )
             # todo: implement communication to gui
 
