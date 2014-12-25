@@ -348,7 +348,7 @@ class Kinematics_geom(Kinematics_base):
         return True
 
 
-    def get_valid_inverse_kin_solutions(self, point):
+    def get_valid_inverse_kin_solutions(self, point, fastCalc):
         """ todo
 
         :param todo
@@ -357,7 +357,10 @@ class Kinematics_geom(Kinematics_base):
         :rtype: todo
         """
         #ik_solutions = self.inverse_kin(point, condition_angle)
-        condition_angle = np.array([ 45.0, 50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0 ])
+        if(fastCalc):
+            condition_angle = np.array([ 45.0, 65.0, 85.0, ])
+        else:
+            condition_angle = np.array([ 45.0, 50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0 ])
         ik_solutions = list()
         for i in range(0,len(condition_angle)):
             #print "condition: ", condition_angle[i]
@@ -370,10 +373,10 @@ class Kinematics_geom(Kinematics_base):
             if self.isSolutionValid(i) == True:
                 valid_solutions.append(i)
 
-        print "valid solutions:"
+        #print "valid solutions:"
         for i in valid_solutions:
-            print "     [%.4f; %.4f; %.4f; %.4f; %.4f]" % ( math.degrees(i[0]), math.degrees(i[1]), math.degrees(i[2]), math.degrees(i[3]), math.degrees(i[4]) )
+            #print "     [%.4f; %.4f; %.4f; %.4f; %.4f]" % ( math.degrees(i[0]), math.degrees(i[1]), math.degrees(i[2]), math.degrees(i[3]), math.degrees(i[4]) )
             dk_pos = self.direct_kin(i)
-            print "             dk_pos: [%.4f; %.4f; %.4f]" % (dk_pos[0],dk_pos[1],dk_pos[2])
+            #print "             dk_pos: [%.4f; %.4f; %.4f]" % (dk_pos[0],dk_pos[1],dk_pos[2])
 
         return valid_solutions
