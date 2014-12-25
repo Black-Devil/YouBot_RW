@@ -2,7 +2,8 @@
     --> eine LinearMovement Function(3d_point_array):
 	      erhält Punktkette eines Buchstaben; fährt von der aktuellen Position kollisionsfrei mit linearer Bewegung an die Position über dem Buchstaben(gewisser Offset in Z); fährt dann an den ersten Punkt des Buchstaben in linearer Bewegung; fährt dann alle Punkte des Buchstaben in linearer Bewegung ab und schaltet das Zeichnen dabei ein; fährt dan in linearer Bewegung ohne Zeichnen in die Position über dem Buchstaben(jetzt über dem letzten Punkt des Buchstaben);
 	      
-    -->[M] GUI entsprechend angepasst und Eingabemöglichkeiten entsprechend in Ros-Message integriert
+    -->[M] GUI entsprechend angepasst und Eingabemöglichkeiten entsprechend in Ros-Message integriert:
+		-dropbox für processingMode(Writing, Logo, PTP_positon, PTP_angles, LIN_position, LIN_angles)
 
     --> Singularitäten checken und abfangen
     -->[j] Zeichnen VREP für Buchstaben optimieren/ermöglichen

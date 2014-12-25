@@ -55,7 +55,7 @@
        <item row="0" column="0">
         <widget class="QLabel" name="fontsize_label">
          <property name="text">
-          <string>Fontsize</string>
+          <string>Fontsize:</string>
          </property>
         </widget>
        </item>
@@ -81,7 +81,7 @@
        <item row="1" column="0">
         <widget class="QLabel" name="pencilLength_label">
          <property name="text">
-          <string>Pencil Length [cm]</string>
+          <string>Pencil Length [cm]:</string>
          </property>
         </widget>
        </item>
@@ -99,21 +99,24 @@
      </item>
      <item>
       <layout class="QFormLayout" name="formLayout">
+       <property name="fieldGrowthPolicy">
+        <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+       </property>
        <item row="0" column="0">
-        <widget class="QLabel" name="Theta_1_label">
+        <widget class="QLabel" name="processMode_label">
          <property name="text">
-          <string>Theta_1 [grad]</string>
+          <string>Processing Mode:</string>
          </property>
         </widget>
        </item>
        <item row="1" column="0">
-        <widget class="QLabel" name="Theta_2_label">
+        <widget class="QLabel" name="Theta_1_label">
          <property name="text">
-          <string>Theta_2 [grad]</string>
+          <string>Theta_1 [grad]:</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="1">
+       <item row="1" column="1">
         <widget class="QDoubleSpinBox" name="theta_1_doubleSpinBox">
          <property name="decimals">
           <number>1</number>
@@ -129,7 +132,14 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="1">
+       <item row="2" column="0">
+        <widget class="QLabel" name="Theta_2_label">
+         <property name="text">
+          <string>Theta_2 [grad]:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
         <widget class="QDoubleSpinBox" name="theta_2_doubleSpinBox">
          <property name="decimals">
           <number>1</number>
@@ -145,14 +155,14 @@
          </property>
         </widget>
        </item>
-       <item row="2" column="0">
+       <item row="3" column="0">
         <widget class="QLabel" name="Theta_3_label">
          <property name="text">
-          <string>Theta_3 [grad]</string>
+          <string>Theta_3 [grad]:</string>
          </property>
         </widget>
        </item>
-       <item row="2" column="1">
+       <item row="3" column="1">
         <widget class="QDoubleSpinBox" name="theta_3_doubleSpinBox">
          <property name="decimals">
           <number>1</number>
@@ -168,14 +178,14 @@
          </property>
         </widget>
        </item>
-       <item row="3" column="0">
+       <item row="4" column="0">
         <widget class="QLabel" name="Theta_4_label">
          <property name="text">
-          <string>Theta_4 [grad]</string>
+          <string>Theta_4 [grad]:</string>
          </property>
         </widget>
        </item>
-       <item row="3" column="1">
+       <item row="4" column="1">
         <widget class="QDoubleSpinBox" name="theta_4_doubleSpinBox">
          <property name="decimals">
           <number>1</number>
@@ -191,14 +201,14 @@
          </property>
         </widget>
        </item>
-       <item row="4" column="0">
+       <item row="5" column="0">
         <widget class="QLabel" name="Theta_5_label">
          <property name="text">
-          <string>Theta_5 [grad]</string>
+          <string>Theta_5 [grad]:</string>
          </property>
         </widget>
        </item>
-       <item row="4" column="1">
+       <item row="5" column="1">
         <widget class="QDoubleSpinBox" name="theta_5_doubleSpinBox">
          <property name="decimals">
           <number>1</number>
@@ -214,56 +224,14 @@
          </property>
         </widget>
        </item>
-       <item row="5" column="1">
-        <widget class="QCheckBox" name="use_thetas_checkBox">
-         <property name="text">
-          <string>CheckBox</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="0">
-        <widget class="QLabel" name="use_thetas_label">
-         <property name="text">
-          <string>Use Thetas</string>
-         </property>
-        </widget>
-       </item>
        <item row="6" column="0">
-        <widget class="QLabel" name="use_pos_label">
+        <widget class="QLabel" name="pos_x_label">
          <property name="text">
-          <string>Use Position</string>
+          <string>Pos X:</string>
          </property>
         </widget>
        </item>
        <item row="6" column="1">
-        <widget class="QCheckBox" name="use_pos_checkBox">
-         <property name="text">
-          <string>CheckBox</string>
-         </property>
-        </widget>
-       </item>
-       <item row="7" column="0">
-        <widget class="QLabel" name="pos_x_label">
-         <property name="text">
-          <string>Pos X</string>
-         </property>
-        </widget>
-       </item>
-       <item row="8" column="0">
-        <widget class="QLabel" name="pos_y_label">
-         <property name="text">
-          <string>Pos Y</string>
-         </property>
-        </widget>
-       </item>
-       <item row="9" column="0">
-        <widget class="QLabel" name="pos_z_label">
-         <property name="text">
-          <string>Pos Z</string>
-         </property>
-        </widget>
-       </item>
-       <item row="7" column="1">
         <widget class="QDoubleSpinBox" name="pos_x_doubleSpinBox">
          <property name="decimals">
           <number>4</number>
@@ -282,7 +250,14 @@
          </property>
         </widget>
        </item>
-       <item row="8" column="1">
+       <item row="7" column="0">
+        <widget class="QLabel" name="pos_y_label">
+         <property name="text">
+          <string>Pos Y:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="1">
         <widget class="QDoubleSpinBox" name="pos_y_doubleSpinBox">
          <property name="decimals">
           <number>4</number>
@@ -298,7 +273,14 @@
          </property>
         </widget>
        </item>
-       <item row="9" column="1">
+       <item row="8" column="0">
+        <widget class="QLabel" name="pos_z_label">
+         <property name="text">
+          <string>Pos Z:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="1">
         <widget class="QDoubleSpinBox" name="pos_z_doubleSpinBox">
          <property name="decimals">
           <number>4</number>
@@ -313,6 +295,9 @@
           <double>0.050000000000000</double>
          </property>
         </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QComboBox" name="processMode_comboBox"/>
        </item>
       </layout>
      </item>
@@ -360,7 +345,7 @@
         <string>start writing</string>
        </property>
        <property name="text">
-        <string>Start Writing</string>
+        <string>Start Processing</string>
        </property>
        <property name="iconSize">
         <size>

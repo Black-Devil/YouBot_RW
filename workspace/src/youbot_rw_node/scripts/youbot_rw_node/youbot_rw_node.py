@@ -57,6 +57,14 @@ class Node(object):
         self.status_string = "no error"
         self.status_vrep = 0 #0=doing nothing 1= in progress 2= movement done
         self.kinematics = kin.Kinematics_geom()
+        self.config_thetas = np.array([0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0])
+        self.config_pos = np.array([0.0,
+            0.0,
+            0.0])
                 
         #do init here
 
@@ -119,33 +127,42 @@ class Node(object):
         self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "received write command")
 
 	    #DO WRITING WITH ROBOT HERE
-        #print self.config_use_thetas
-        if(self.config_use_thetas == 1 and self.config_use_pos == 0):
-            tmp = self.kinematics.offset2world(self.config_thetas)
-            # TODO: check angle constrains
-            self.send_vrep_joint_targets(tmp, False)
-            self.config_pos = self.kinematics.direct_kin(np.deg2rad(tmp))
-            print("pos: [%.4f; %.4f; %.4f]" % (self.config_pos[0],self.config_pos[1],self.config_pos[2]) )
-            pos_wp = self.kinematics.direct_kin_2_wristPoint(np.deg2rad(tmp))
-            print("pos_wp: [%.4f; %.4f; %.4f]" % (pos_wp[0],pos_wp[1],pos_wp[2]) )
-            # todo: implement communication to gui
+        if(self.config_processMode == status.PROCESSING_MODE_WRITING):
+            print("triggered writing")
+            # TODO: implement Writing
+        elif(self.config_processMode == status.PROCESSING_MODE_LOGO):
+            print("triggered logo")
+            # TODO: implement Logo
 
-        if(self.config_use_pos == 1 and self.config_use_thetas == 0):
-            #self.kinematics.debugTheta_1(wp_1 = np.matrix((0.145,  0.145,  0.0, 1.0)).transpose())
-            #self.kinematics.debugTheta_1(wp_1 = np.matrix((-0.145,  0.145,  0.0, 1.0)).transpose())
-            #self.kinematics.debugTheta_1(wp_1 = np.matrix((-0.145,   0.048,  0.0, 1.0)).transpose())
-            #self.kinematics.debugTheta_1(wp_1 = np.matrix((-0.145,  -0.048,  0.0, 1.0)).transpose())
+        elif(self.config_processMode == status.PROCESSING_MODE_PTP_ANGLES or self.config_processMode == status.PROCESSING_MODE_LIN_ANGLES):
+            print("triggered angles")
+            tmp = self.kinematics.offset2world(self.config_thetas)
+            if(self.kinematics.isSolutionValid(tmp)):
+                self.send_vrep_joint_targets(tmp, False)
+                self.config_pos = self.kinematics.direct_kin(np.deg2rad(tmp))
+                print("pos: [%.4f; %.4f; %.4f]" % (self.config_pos[0],self.config_pos[1],self.config_pos[2]) )
+                pos_wp = self.kinematics.direct_kin_2_wristPoint(np.deg2rad(tmp))
+                print("pos_wp: [%.4f; %.4f; %.4f]" % (pos_wp[0],pos_wp[1],pos_wp[2]) )
+                self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "angle processing done")
+            else:
+                print("ERROR: Target angles are not valid! This should never happen, if GUI is used.")
+
+        elif(self.config_processMode == status.PROCESSING_MODE_PTP_POSITION or self.config_processMode == status.PROCESSING_MODE_LIN_POSITION):
+            print("triggered position")
             tmpPos = np.matrix((self.config_pos[0],  self.config_pos[1],  self.config_pos[2])).transpose()
             #print "input ik", tmpPos
             valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(tmpPos)
             if not valid_ik_solutions:
                 print "// no valid ik solution possible! //"
+                self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "position processing done, found no solution")
             else:
                 print "// valid ik solution possible! //"
                 #print "first valid ik solution: [%.4f; %.4f; %.4f; %.4f; %.4f;]" % (math.degrees(valid_ik_solutions[0][0]), math.degrees(valid_ik_solutions[0][1]), math.degrees(valid_ik_solutions[0][2]), math.degrees(valid_ik_solutions[0][3]), math.degrees(valid_ik_solutions[0][4]) ) , self.kinematics.isSolutionValid(valid_ik_solutions[0])
                 #dk_pos = self.kinematics.direct_kin(valid_ik_solutions[0], True)
                 #print "dk_pos: [%.4f; %.4f; %.4f]" % (dk_pos[0],dk_pos[1],dk_pos[2])
+                self.config_thetas = valid_ik_solutions[0]
                 self.send_vrep_joint_targets(valid_ik_solutions[0], True)
+                self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "position processing done, found solution")
                 #tmp = self.kinematics.offset2world(valid_ik_solutions[0])
                 #send tmp to GUI
 
@@ -217,14 +234,12 @@ class Node(object):
         #CONFIG
         self.config_fontsize = int(msg.Fontsize)
         self.config_pencil_length = float(msg.PencilLength)
-        self.config_use_thetas = int(msg.UseThetas)
+        self.config_processMode = int(msg.processmode)
         self.config_thetas = np.array([msg.Theta_1,
             msg.Theta_2,
             msg.Theta_3,
             msg.Theta_4,
             msg.Theta_5])
-
-        self.config_use_pos = int(msg.UsePos)
         self.config_pos = np.array([msg.Pos_X,
             msg.Pos_Y,
             msg.Pos_Z])
@@ -237,13 +252,24 @@ class Node(object):
         msg.nodestatus=nodestatus
         msg.vrepstatus=vrepstatus
         msg.error=error_txt
+
+        # setting GUI output
+        msg.Pos_X = self.config_pos[0]
+        msg.Pos_Y = self.config_pos[1]
+        msg.Pos_Z = self.config_pos[2]
+        msg.Theta_1 = self.config_thetas[0]
+        msg.Theta_2 = self.config_thetas[1]
+        msg.Theta_3 = self.config_thetas[2]
+        msg.Theta_4 = self.config_thetas[3]
+        msg.Theta_5 = self.config_thetas[4]
+
         self.status = nodestatus
         self.status_vrep = vrepstatus
         self.status_string = error_txt
         #set status: [nodestatus;vrepstatus;]
         self.pub2gui.publish(msg)
         
-        rospy.loginfo("send status 2 gui")
+        #rospy.loginfo("send status 2 gui")
         #rospy.loginfo(commandStr)
         
         

@@ -64,7 +64,15 @@ class YouBotGuiWidget(QWidget):
         rp = rospkg.RosPack()
         ui_file = os.path.join(rp.get_path('youbot_rw_rqt_gui'), 'resource', 'YouBotGui_widget.ui')
         loadUi(ui_file, self)
-        
+
+        # init gui stuff
+        self.processMode_comboBox.addItem("Writing")
+        self.processMode_comboBox.addItem("Draw Logo")
+        self.processMode_comboBox.addItem("PTP Position")
+        self.processMode_comboBox.addItem("PTP Angles")
+        self.processMode_comboBox.addItem("LIN Position")
+        self.processMode_comboBox.addItem("LIN Angles")
+
         #self.my_node = rospy.init_node('youbot_rw_gui_node')
         self.pub_write_cmd = rospy.Publisher('/youbot_rw/gui2node', rw_node, tcp_nodelay=True,queue_size=1)
         rospy.Subscriber('/youbot_rw/node2gui', rw_node_state, self.callback_status_cmd)
@@ -118,8 +126,6 @@ class YouBotGuiWidget(QWidget):
 
     def _handle_write_clicked(self):
         msg=rw_node()
-        msg.UseThetas=self.use_thetas_checkBox.isChecked()
-        msg.UsePos=self.use_pos_checkBox.isChecked()
         msg.Theta_1=self.theta_1_doubleSpinBox.value()
         msg.Theta_2=self.theta_2_doubleSpinBox.value()
         msg.Theta_3=self.theta_3_doubleSpinBox.value()
@@ -129,6 +135,25 @@ class YouBotGuiWidget(QWidget):
         msg.Pos_Y=self.pos_y_doubleSpinBox.value()
         msg.Pos_Z=self.pos_z_doubleSpinBox.value()
         msg.letters=str(self.plainTextEdit_writeContent.toPlainText())
+        if(self.processMode_comboBox.currentIndex() == 0):
+            msg.processmode = status.PROCESSING_MODE_WRITING
+            self.processMode = status.PROCESSING_MODE_WRITING
+        elif(self.processMode_comboBox.currentIndex() == 1):
+            msg.processmode = status.PROCESSING_MODE_LOGO
+            self.processMode = status.PROCESSING_MODE_LOGO
+        elif(self.processMode_comboBox.currentIndex() == 2):
+            msg.processmode = status.PROCESSING_MODE_PTP_POSITION
+            self.processMode = status.PROCESSING_MODE_PTP_POSITION
+        elif(self.processMode_comboBox.currentIndex() == 3):
+            msg.processmode = status.PROCESSING_MODE_PTP_ANGLES
+            self.processMode = status.PROCESSING_MODE_PTP_ANGLES
+        elif(self.processMode_comboBox.currentIndex() == 4):
+            msg.processmode = status.PROCESSING_MODE_LIN_POSITION
+            self.processMode = status.PROCESSING_MODE_LIN_POSITION
+        elif(self.processMode_comboBox.currentIndex() == 5):
+            msg.processmode = status.PROCESSING_MODE_LIN_ANGLES
+            self.processMode = status.PROCESSING_MODE_LIN_ANGLES
+
         self.pub_write_cmd.publish(msg)
         
         
@@ -136,14 +161,18 @@ class YouBotGuiWidget(QWidget):
 	    #CONFIG
 	    self.status_node_status = msg.nodestatus
 	    self.status_vrep_status = msg.vrepstatus
-	
+
 	    #DATA
 	    self.status_data_string = msg.error
 	
 	
 	    if self.status_node_status == status.STATUS_NODE_NO_ERROR:
 	        self.set_status_text.emit(self.status_data_string)
-                
+
+            #if(self.processMode == status.PROCESSING_MODE_PTP_POSITION or self.processMode == status.PROCESSING_MODE_LIN_POSITION):
+                # TODO: set angles
+            #elif(self.processMode == status.PROCESSING_MODE_PTP_ANGLES or self.processMode == status.PROCESSING_MODE_LIN_ANGLES):
+                # TODO: set pos
     
 
     def _set_status_text(self, text):

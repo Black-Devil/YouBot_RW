@@ -1,4 +1,12 @@
 int32 		nodestatus
 int32 		vrepstatus
 string 		error
+float64 	Theta_1
+float64 	Theta_2
+float64 	Theta_3
+float64 	Theta_4
+float64 	Theta_5
+float64 	Pos_X
+float64 	Pos_Y
+float64 	Pos_Z
 string 		return
