@@ -22,7 +22,7 @@
 	-ROS Package	[check]
 	-kleine Gui	[check]
 	-Steuerung des YouBot in VRep über VRep-Kinematics	[check]
-	-Ansteuerung von hardgecodeten Punkten
+	-Ansteuerung von hardgecodeten Punkten			[check]
     -Phase 2:
 	-kleine Buchstaben Datenbank
 	-Transformationen für Buchstaben-KoordinatenSystem, Schreibunterlage-System, etc.

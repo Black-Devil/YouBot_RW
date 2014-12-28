@@ -12,9 +12,14 @@ import numpy as np
 
 import kinematics_geom as kin
 
+from lxml import etree
+
+import xml.etree.ElementTree as ET
 
 import status_intf as status
 from youbot_rw_rqt_gui.msg import *
+
+import os
 
 
 class Node(object):
@@ -65,7 +70,22 @@ class Node(object):
         self.config_pos = np.array([0.0,
             0.0,
             0.0])
-                
+
+        # parse xml letter database
+        script_path = os.path.dirname(os.path.abspath(__file__))
+        print("script dir: "), script_path
+        db_path = script_path + '/../../../../../material/YouBot_RW_Material/Buchstaben_Datenbank/letter_database.xml'
+        print("opening following letter_database: "), db_path
+        self.letter_database = ET.parse(db_path)
+        self.ldb_root = self.letter_database.getroot()
+
+        # print loaded ldb elements
+        print("Loaded "), self.ldb_root.tag, (": ")
+        for letter in self.ldb_root:
+            pointlist = self.get_pointlist4letter(letter.tag)
+            print(letter.tag),(": "), pointlist
+
+
         #do init here
 
 
@@ -73,7 +93,8 @@ class Node(object):
         #print "waiting for button"
         while(not rospy.is_shutdown() and self.run):
             if(self.run_status):
-                self.init_params()
+                # TODO: is this needed?
+                #self.init_params()
                 self.spin()                
             self.r.sleep()
 
@@ -130,10 +151,20 @@ class Node(object):
         if(self.config_processMode == status.PROCESSING_MODE_WRITING):
             print("triggered writing")
             # TODO: implement Writing
-            debugPointList = np.array([ np.matrix([0.05, 0.0, 0.05]).transpose(),
-                                        np.matrix([-0.05, 0.0, 0.05]).transpose(),
-                                        np.matrix([0.05, 0.0, 0.1]).transpose() ])
-            self.process_linear_movement(debugPointList)
+            for letter in self.data_string:
+                # search letter in database
+                pointlist = self.get_pointlist4letter(letter)
+                if not pointlist:
+                    print(letter), ("is not yet in the letter database and will be skipt during writing process")
+                else:
+                    # TODO: implement transformation handling for the individual letters, etc.
+                    print("process extracted pointlist...")
+                    self.process_linear_movement(pointlist)
+
+            #debugPointList = np.array([ np.matrix([0.05, 0.0, 0.05]).transpose(),
+            #                            np.matrix([-0.05, 0.0, 0.05]).transpose(),
+            #                            np.matrix([0.05, 0.0, 0.1]).transpose() ])
+            #self.process_linear_movement(debugPointList)
 
         elif(self.config_processMode == status.PROCESSING_MODE_LOGO):
             print("triggered logo")
@@ -187,6 +218,20 @@ class Node(object):
         #rospy.logwarn('self.poly_y == 0')
 
         self.lock.release()
+
+
+    def get_pointlist4letter(self, letter):
+        dbElement = self.ldb_root.find(letter)
+        resPointlist = list()
+        if(dbElement != None):
+            dbPointlist = list(dbElement)
+            for point in dbPointlist:
+                resPointlist.append(np.matrix([ float(point.attrib['x']), float(point.attrib['y']), float(point.attrib['z']) ]).transpose() )
+                #print(" [%f; %f; %f]") %(float(point.attrib['x']), float(point.attrib['y']), float(point.attrib['z'])), letter
+        else:
+            print("ERROR: no element found with tag %s!") %(letter)
+
+        return resPointlist
 
 
     def process_linear_movement(self, point_list):

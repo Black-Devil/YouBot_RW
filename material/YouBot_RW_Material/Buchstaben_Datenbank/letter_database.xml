@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<letter_database>
+	<L> <point x="0.0" y="0.0" z="0.0"/> <point x="0.1" y="0.0" z="0.0"/> <point x="0.1" y="0.05" z="0.0"/> </L>
+	<V> <point x="0.0" y="0.0" z="0.0"/> <point x="0.1" y="0.025" z="0.0"/> <point x="0.0" y="0.05" z="0.0"/> </V>
+	<W> <point x="0.0" y="0.0" z="0.0"/> <point x="0.1" y="0.0125" z="0.0"/> <point x="0.03" y="0.025" z="0.0"/> <point x="0.1" y="0.0375" z="0.0"/> <point x="0.0" y="0.05" z="0.0"/> </W>
+</letter_database>
