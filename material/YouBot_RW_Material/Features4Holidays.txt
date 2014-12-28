@@ -1,6 +1,6 @@
 -Lineare Bewegung: 
 [in progress]    --> eine LinearMovement Function(3d_point_array):
-      	erhält Punktkette eines Buchstaben; fährt von der aktuellen Position kollisionsfrei mit linearer Bewegung an die Position über dem Buchstaben(gewisser Offset in Z); fährt dann an den ersten Punkt des Buchstaben in linearer Bewegung; fährt dann alle Punkte des Buchstaben in linearer Bewegung ab und schaltet das Zeichnen dabei ein; fährt dan in linearer Bewegung ohne Zeichnen in die Position über dem Buchstaben(jetzt über dem letzten Punkt des Buchstaben);
+      	erhält Punktkette eines Buchstaben; fährt von der aktuellen Position kollisionsfrei mit linearer Bewegung an die Position über dem Buchstaben(gewisser Offset in Z); fährt dann an den ersten Punkt des Buchstaben in linearer Bewegung; fährt dann alle Punkte des Buchstaben in linearer Bewegung ab und schaltet das Zeichnen dabei ein; fährt dann in linearer Bewegung ohne Zeichnen in die Position über dem Buchstaben(jetzt über dem letzten Punkt des Buchstaben);
 	      
 [done]    -->[M] GUI entsprechend angepasst und Eingabemöglichkeiten entsprechend in Ros-Message integriert:
 		-dropbox für processingMode(Writing, Logo, PTP_positon, PTP_angles, LIN_position, LIN_angles)
@@ -11,7 +11,7 @@
     
 -Buchstaben Datenbank:
     --> Datenbank aufbauen (XML)
-    --> Einlese-Funktion
+[done]    --> Einlese-Funktion
     --> Transformationsfunktion für Buchstabe zu Schreibunterlage
     --> Schriftgrößen-Feature integrieren
     --> Zeichen für nicht implementierte Buchstaben verwenden

@@ -149,22 +149,7 @@ class Node(object):
 
 	    #DO WRITING WITH ROBOT HERE
         if(self.config_processMode == status.PROCESSING_MODE_WRITING):
-            print("triggered writing")
-            # TODO: implement Writing
-            for letter in self.data_string:
-                # search letter in database
-                pointlist = self.get_pointlist4letter(letter)
-                if not pointlist:
-                    print(letter), ("is not yet in the letter database and will be skipt during writing process")
-                else:
-                    # TODO: implement transformation handling for the individual letters, etc.
-                    print("process extracted pointlist...")
-                    self.process_linear_movement(pointlist)
-
-            #debugPointList = np.array([ np.matrix([0.05, 0.0, 0.05]).transpose(),
-            #                            np.matrix([-0.05, 0.0, 0.05]).transpose(),
-            #                            np.matrix([0.05, 0.0, 0.1]).transpose() ])
-            #self.process_linear_movement(debugPointList)
+            self.process_writing()
 
         elif(self.config_processMode == status.PROCESSING_MODE_LOGO):
             print("triggered logo")
@@ -220,6 +205,38 @@ class Node(object):
         self.lock.release()
 
 
+    def process_writing(self):
+        print("triggered writing")
+        # TODO: implement Writing
+        for letter in self.data_string:
+            # search letter in database
+            pointlist = self.get_pointlist4letter(letter)
+            if not pointlist:
+                print(letter), ("is not yet in the letter database and will be skipt during writing process")
+            else:
+                # TODO: implement transformation handling for the individual letters, etc.
+                hoverOffset = 0.01
+                # move from current position to next letter position
+                toNextLetter = np.array([ np.matrix([self.config_pos[0], self.config_pos[1], self.config_pos[2]]).transpose(),
+                                            np.matrix([float(pointlist[0][0]), float(pointlist[0][1]), (float(pointlist[0][2]) + hoverOffset)]).transpose(),
+                                            np.matrix([float(pointlist[0][0]), float(pointlist[0][1]), float(pointlist[0][2]) ]).transpose() ])
+                self.process_linear_movement(toNextLetter)
+
+                self.process_linear_movement(pointlist)
+
+                # move to hover position
+                toHoverPos = np.array([ np.matrix([float(self.config_pos[0]), float(self.config_pos[1]), float(self.config_pos[2])]).transpose(),
+                                            np.matrix([float(self.config_pos[0]), float(self.config_pos[1]), (float(self.config_pos[2]) + hoverOffset)]).transpose()    ])
+
+                self.process_linear_movement(toHoverPos)
+
+
+        #debugPointList = np.array([ np.matrix([0.05, 0.0, 0.05]).transpose(),
+        #                            np.matrix([-0.05, 0.0, 0.05]).transpose(),
+        #                            np.matrix([0.05, 0.0, 0.1]).transpose() ])
+        #self.process_linear_movement(debugPointList)
+
+
     def get_pointlist4letter(self, letter):
         dbElement = self.ldb_root.find(letter)
         resPointlist = list()
@@ -243,22 +260,26 @@ class Node(object):
         :rtype: todo
         """
         # calc step size
-        step_size = 0.01
-        max_step = int(1.0/step_size)
+        step_size = 0.002
+        #max_step = int(1.0/step_size)
 
         # process pointlist
         for i in point_list:
             origin = self.config_pos
             move_vec = np.array([ i[0] - origin[0], i[1] - origin[1], i[2] - origin[2] ])
-            step_vec = np.array([ move_vec[0] * step_size, move_vec[1] * step_size, move_vec[2] * step_size ])
-            print("current point: "), i
+            move_length = np.sqrt(move_vec[0]**2 + move_vec[1]**2 + move_vec[2]**2)
+
+            step_count_int = int(move_length/step_size) + 1
+            step_count_float = move_length/step_size
+            step_vec = np.array([ move_vec[0] / step_count_float, move_vec[1] / step_count_float, move_vec[2] / step_count_float ])
+            #print("current point: "), i
 
             # process single point out of pointlist
-            for k in range(1,max_step+1):
+            for k in range(1,step_count_int+1):
 
                 current_valid = False
                 #print k
-                if(k == max_step):
+                if(k == step_count_int):
                     #print("debug k = "),int(1.0/step_size)+1
                     current_trgt = np.array([ i[0], i[1], i[2]])
                 else:
@@ -283,6 +304,7 @@ class Node(object):
 
             self.config_pos = np.array([ i[0], i[1], i[2] ])
             self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "linear movement in progress...")
+
 
 
     def callback_vrep_joint_states(self,msg):
