@@ -348,7 +348,7 @@ class Kinematics_geom(Kinematics_base):
         return True
 
 
-    def get_valid_inverse_kin_solutions(self, point, fastCalc):
+    def get_valid_inverse_kin_solutions(self, point, fastCalc, limit_solution):
         """ todo
 
         :param todo
@@ -371,12 +371,16 @@ class Kinematics_geom(Kinematics_base):
         valid_solutions = list()
         for i in ik_solutions:
             if self.isSolutionValid(i) == True:
-                valid_solutions.append(i)
+                if not (limit_solution):
+                    valid_solutions.append(i)
+                else:
+                    if(i[0] < (np.pi/2) and i[0] > -(np.pi/2)):
+                        valid_solutions.append(i)
 
         #print "valid solutions:"
-        for i in valid_solutions:
+        #for i in valid_solutions:
             #print "     [%.4f; %.4f; %.4f; %.4f; %.4f]" % ( math.degrees(i[0]), math.degrees(i[1]), math.degrees(i[2]), math.degrees(i[3]), math.degrees(i[4]) )
-            dk_pos = self.direct_kin(i)
+            #dk_pos = self.direct_kin(i)
             #print "             dk_pos: [%.4f; %.4f; %.4f]" % (dk_pos[0],dk_pos[1],dk_pos[2])
 
         return valid_solutions

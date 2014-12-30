@@ -150,64 +150,87 @@ class Node(object):
 	    #DO WRITING WITH ROBOT HERE
         if(self.config_processMode == status.PROCESSING_MODE_WRITING):
             self.process_writing()
-
         elif(self.config_processMode == status.PROCESSING_MODE_LOGO):
             print("triggered logo")
             # TODO: implement Logo
 
-        elif(self.config_processMode == status.PROCESSING_MODE_PTP_ANGLES or self.config_processMode == status.PROCESSING_MODE_LIN_ANGLES):
-            print("triggered angles")
-            tmp = self.kinematics.offset2world(self.config_thetas)
-            if(self.kinematics.isSolutionValid(tmp)):
-                self.send_vrep_joint_targets(tmp, False)
-                self.config_pos = self.kinematics.direct_kin(np.deg2rad(tmp))
-                print("pos: [%.4f; %.4f; %.4f]" % (self.config_pos[0],self.config_pos[1],self.config_pos[2]) )
-                pos_wp = self.kinematics.direct_kin_2_wristPoint(np.deg2rad(tmp))
-                print("pos_wp: [%.4f; %.4f; %.4f]" % (pos_wp[0],pos_wp[1],pos_wp[2]) )
-                self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "angle processing done")
-            else:
-                print("ERROR: Target angles are not valid! This should never happen, if GUI is used.")
+        elif(self.config_processMode == status.PROCESSING_MODE_PTP_ANGLES):
+            self.process_ptp_angles()
+        elif(self.config_processMode == status.PROCESSING_MODE_LIN_ANGLES):
+            self.process_ptp_angles()
+        elif(self.config_processMode == status.PROCESSING_MODE_PTP_POSITION):
+            self.process_ptp_position()
+        elif(self.config_processMode == status.PROCESSING_MODE_LIN_POSITION):
+            self.process_lin_position()
 
-        elif(self.config_processMode == status.PROCESSING_MODE_PTP_POSITION or self.config_processMode == status.PROCESSING_MODE_LIN_POSITION):
-            print("triggered position")
-            tmpPos = np.matrix((self.config_pos[0],  self.config_pos[1],  self.config_pos[2])).transpose()
-            #print "input ik", tmpPos
-            valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(tmpPos, True)
-            valid_sol = False
-            if not valid_ik_solutions:
-                # try again without fast calculation
-                valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(tmpPos, False)
-                if not valid_ik_solutions:
-                    print "// no valid ik solution possible! //"
-                    self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "position processing done, found no solution")
-                else:
-                    valid_sol = True
-            else:
-                valid_sol = True
 
-            if valid_sol:
-                print "// valid ik solution possible! //"
-                #print "first valid ik solution: [%.4f; %.4f; %.4f; %.4f; %.4f;]" % (math.degrees(valid_ik_solutions[0][0]), math.degrees(valid_ik_solutions[0][1]), math.degrees(valid_ik_solutions[0][2]), math.degrees(valid_ik_solutions[0][3]), math.degrees(valid_ik_solutions[0][4]) ) , self.kinematics.isSolutionValid(valid_ik_solutions[0])
-                #dk_pos = self.kinematics.direct_kin(valid_ik_solutions[0], True)
-                #print "dk_pos: [%.4f; %.4f; %.4f]" % (dk_pos[0],dk_pos[1],dk_pos[2])
-                self.config_thetas = valid_ik_solutions[0]
-                self.send_vrep_joint_targets(valid_ik_solutions[0], True)
-                self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "position processing done, found solution")
-                #tmp = self.kinematics.offset2world(valid_ik_solutions[0])
-                #send tmp to GUI
-
-	
 	    #self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "movement in progress")
-	
-	
+
         #rospy.logwarn('self.poly_y == 0')
 
         self.lock.release()
 
 
+    def process_ptp_angles(self):
+        print("triggered angles")
+        tmp = self.kinematics.offset2world(self.config_thetas)
+        if(self.kinematics.isSolutionValid(tmp)):
+            self.send_vrep_joint_targets(tmp, False)
+            self.config_pos = self.kinematics.direct_kin(np.deg2rad(tmp))
+            print("pos: [%.4f; %.4f; %.4f]" % (self.config_pos[0],self.config_pos[1],self.config_pos[2]) )
+            pos_wp = self.kinematics.direct_kin_2_wristPoint(np.deg2rad(tmp))
+            print("pos_wp: [%.4f; %.4f; %.4f]" % (pos_wp[0],pos_wp[1],pos_wp[2]) )
+            self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "angle processing done")
+        else:
+            print("ERROR: Target angles are not valid! This should never happen, if GUI is used.")
+
+
+    def process_lin_position(self):
+        print("triggered lin position")
+        tmpPos = list()
+        tmpPos.append(np.matrix((self.config_pos[0],  self.config_pos[1],  self.config_pos[2])).transpose())
+        self.process_linear_movement(tmpPos, False)
+
+    def process_ptp_position(self):
+        print("triggered ptp position")
+        tmpPos = np.matrix((self.config_pos[0],  self.config_pos[1],  self.config_pos[2])).transpose()
+        #print "input ik", tmpPos
+        valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(tmpPos, True, False)
+        valid_sol = False
+        if not valid_ik_solutions:
+            # try again without fast calculation
+            valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(tmpPos, False, False)
+            if not valid_ik_solutions:
+                print "// no valid ik solution possible! //"
+                self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "position processing done, found no solution")
+            else:
+                valid_sol = True
+        else:
+            valid_sol = True
+
+        if valid_sol:
+            print "// valid ik solution possible! //"
+            #print "first valid ik solution: [%.4f; %.4f; %.4f; %.4f; %.4f;]" % (math.degrees(valid_ik_solutions[0][0]), math.degrees(valid_ik_solutions[0][1]), math.degrees(valid_ik_solutions[0][2]), math.degrees(valid_ik_solutions[0][3]), math.degrees(valid_ik_solutions[0][4]) ) , self.kinematics.isSolutionValid(valid_ik_solutions[0])
+            #dk_pos = self.kinematics.direct_kin(valid_ik_solutions[0], True)
+            #print "dk_pos: [%.4f; %.4f; %.4f]" % (dk_pos[0],dk_pos[1],dk_pos[2])
+            self.config_thetas = valid_ik_solutions[0]
+            self.send_vrep_joint_targets(valid_ik_solutions[0], True)
+            self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "position processing done, found solution")
+            #tmp = self.kinematics.offset2world(valid_ik_solutions[0])
+            #send tmp to GUI
+
+
     def process_writing(self):
         print("triggered writing")
         # TODO: implement Writing
+        # all letter coorinates are in font_size 10
+        self.base_fs = 10.0
+        self.between_letter_margin = 0.001  # x coordinate
+        self.between_line_margin = 0.001    # y coordinate
+        # set start position of writing in write_plane coordinates
+        current_write_pos = np.array([ -0.05, -0.1 ])
+
+
         for letter in self.data_string:
             # search letter in database
             pointlist = self.get_pointlist4letter(letter)
@@ -218,17 +241,17 @@ class Node(object):
                 hoverOffset = 0.01
                 # move from current position to next letter position
                 toNextLetter = np.array([ np.matrix([self.config_pos[0], self.config_pos[1], self.config_pos[2]]).transpose(),
-                                            np.matrix([float(pointlist[0][0]), float(pointlist[0][1]), (float(pointlist[0][2]) + hoverOffset)]).transpose(),
+                                            np.matrix([float(pointlist[0][0] * (self.config_fontsize/self.base_fs)), float(pointlist[0][1]), (float(pointlist[0][2]) + hoverOffset)]).transpose(),
                                             np.matrix([float(pointlist[0][0]), float(pointlist[0][1]), float(pointlist[0][2]) ]).transpose() ])
-                self.process_linear_movement(toNextLetter)
+                self.process_linear_movement(toNextLetter, True)
 
-                self.process_linear_movement(pointlist)
+                self.process_linear_movement(pointlist, True)
 
                 # move to hover position
                 toHoverPos = np.array([ np.matrix([float(self.config_pos[0]), float(self.config_pos[1]), float(self.config_pos[2])]).transpose(),
                                             np.matrix([float(self.config_pos[0]), float(self.config_pos[1]), (float(self.config_pos[2]) + hoverOffset)]).transpose()    ])
 
-                self.process_linear_movement(toHoverPos)
+                self.process_linear_movement(toHoverPos, True)
 
 
         #debugPointList = np.array([ np.matrix([0.05, 0.0, 0.05]).transpose(),
@@ -251,7 +274,7 @@ class Node(object):
         return resPointlist
 
 
-    def process_linear_movement(self, point_list):
+    def process_linear_movement(self, point_list, limit_solution):
         """ takes np.array of 3d points(np.matrix) and processes linear movement from current position to all points
 
         :param todo
@@ -286,10 +309,10 @@ class Node(object):
                     current_trgt = np.array([ origin[0] + k*step_vec[0], origin[1] + k*step_vec[1], origin[2] + k*step_vec[2]])
 
                 # calc inverse kinematik for current point
-                valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, True)
+                valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, True, limit_solution)
                 if not valid_ik_solutions:
                     #try again without fast calculation
-                    valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, False)
+                    valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, False, limit_solution)
                     if not valid_ik_solutions:
                         print("Found no ik solution for point(%.4f; %.4f; %.4f). Processing goes on with next point.") %(current_trgt[0], current_trgt[1], current_trgt[2])
                     else:
