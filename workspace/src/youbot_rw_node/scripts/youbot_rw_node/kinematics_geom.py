@@ -338,11 +338,14 @@ class Kinematics_geom(Kinematics_base):
         :rtype: todo
         """
         if len(solution) != 5:
+            #print("length is not 5!")
             return False
         for i in range(0,len(solution)):
             if math.isnan(solution[i]):
+                #print("index"), i, ("is nan!")
                 return False
             elif solution[i] < self.min_angles_[i] or solution[i] > self.max_angles_[i]:
+                #print("index:"), i, (" %.4f [%.4f; %.4f]") %(solution[i], self.min_angles_[i], self.max_angles_[i])
                 return False
 
         return True

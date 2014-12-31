@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-from time import sleep, time
+#from time import sleep, time
+import time
 import math
 import threading
 
@@ -40,7 +41,7 @@ class Node(object):
         self.spin_count = 0
         self.r = rospy.Rate(self.rate)
         
-        rospy.Subscriber('/youbot_rw/gui2node', rw_node, self.callback_write_cmd)
+        rospy.Subscriber('/youbot_rw/gui2node', rw_node, self.callback_process_cmd)
         self.pub2gui = rospy.Publisher('/youbot_rw/node2gui', rw_node_state, tcp_nodelay=True,queue_size=1)
         # Publisher for vrep interface
         self.pub2vrep_joint_1_trgt = rospy.Publisher('/youbot_rw/vrep/arm_joint1_target', Float64, tcp_nodelay=True,queue_size=1)
@@ -67,7 +68,10 @@ class Node(object):
             0.0,
             0.0,
             0.0])
-        self.config_pos = np.array([0.0,
+        self.config_cur_pos = np.array([0.0,
+            0.0,
+            0.0])
+        self.config_trgt_pos = np.array([0.0,
             0.0,
             0.0])
 
@@ -82,8 +86,7 @@ class Node(object):
         # print loaded ldb elements
         print("Loaded "), self.ldb_root.tag, (": ")
         for letter in self.ldb_root:
-            pointlist = self.get_pointlist4letter(letter.tag)
-            print(letter.tag),(": "), pointlist
+            print(letter.tag)
 
 
         #do init here
@@ -136,13 +139,13 @@ class Node(object):
     
     
      
-    def callback_write_cmd(self,msg):
+    def callback_process_cmd(self,msg):
         if(not self.run_status):
             return
 
         self.lock.acquire()
 
-        rospy.loginfo("write_cmd callback")        
+        rospy.loginfo("process_cmd callback")
         self.time = rospy.get_time()
         self.parse_input_from_gui(msg)
         self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "received write command")
@@ -157,7 +160,8 @@ class Node(object):
         elif(self.config_processMode == status.PROCESSING_MODE_PTP_ANGLES):
             self.process_ptp_angles()
         elif(self.config_processMode == status.PROCESSING_MODE_LIN_ANGLES):
-            self.process_ptp_angles()
+            print("ERROR - linear movement through angle input is not implemented yet")
+            self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "ERROR - linear movement through angle input is not implemented yet")
         elif(self.config_processMode == status.PROCESSING_MODE_PTP_POSITION):
             self.process_ptp_position()
         elif(self.config_processMode == status.PROCESSING_MODE_LIN_POSITION):
@@ -174,10 +178,10 @@ class Node(object):
     def process_ptp_angles(self):
         print("triggered angles")
         tmp = self.kinematics.offset2world(self.config_thetas)
-        if(self.kinematics.isSolutionValid(tmp)):
+        if(self.kinematics.isSolutionValid(np.deg2rad(tmp))):
             self.send_vrep_joint_targets(tmp, False)
-            self.config_pos = self.kinematics.direct_kin(np.deg2rad(tmp))
-            print("pos: [%.4f; %.4f; %.4f]" % (self.config_pos[0],self.config_pos[1],self.config_pos[2]) )
+            self.config_cur_pos = self.kinematics.direct_kin(np.deg2rad(tmp))
+            print("pos: [%.4f; %.4f; %.4f]" % (self.config_cur_pos[0],self.config_cur_pos[1],self.config_cur_pos[2]) )
             pos_wp = self.kinematics.direct_kin_2_wristPoint(np.deg2rad(tmp))
             print("pos_wp: [%.4f; %.4f; %.4f]" % (pos_wp[0],pos_wp[1],pos_wp[2]) )
             self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "angle processing done")
@@ -188,12 +192,12 @@ class Node(object):
     def process_lin_position(self):
         print("triggered lin position")
         tmpPos = list()
-        tmpPos.append(np.matrix((self.config_pos[0],  self.config_pos[1],  self.config_pos[2])).transpose())
+        tmpPos.append(np.matrix((self.config_trgt_pos[0],  self.config_trgt_pos[1],  self.config_trgt_pos[2])).transpose())
         self.process_linear_movement(tmpPos, False)
 
     def process_ptp_position(self):
         print("triggered ptp position")
-        tmpPos = np.matrix((self.config_pos[0],  self.config_pos[1],  self.config_pos[2])).transpose()
+        tmpPos = np.matrix((self.config_trgt_pos[0],  self.config_trgt_pos[1],  self.config_trgt_pos[2])).transpose()
         #print "input ik", tmpPos
         valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(tmpPos, True, False)
         valid_sol = False
@@ -202,7 +206,7 @@ class Node(object):
             valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(tmpPos, False, False)
             if not valid_ik_solutions:
                 print "// no valid ik solution possible! //"
-                self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "position processing done, found no solution")
+                self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "position processing not possible, found no ik solution")
             else:
                 valid_sol = True
         else:
@@ -213,8 +217,18 @@ class Node(object):
             #print "first valid ik solution: [%.4f; %.4f; %.4f; %.4f; %.4f;]" % (math.degrees(valid_ik_solutions[0][0]), math.degrees(valid_ik_solutions[0][1]), math.degrees(valid_ik_solutions[0][2]), math.degrees(valid_ik_solutions[0][3]), math.degrees(valid_ik_solutions[0][4]) ) , self.kinematics.isSolutionValid(valid_ik_solutions[0])
             #dk_pos = self.kinematics.direct_kin(valid_ik_solutions[0], True)
             #print "dk_pos: [%.4f; %.4f; %.4f]" % (dk_pos[0],dk_pos[1],dk_pos[2])
-            self.config_thetas = valid_ik_solutions[0]
+
             self.send_vrep_joint_targets(valid_ik_solutions[0], True)
+            self.config_cur_pos = self.kinematics.direct_kin(valid_ik_solutions[0])
+            self.config_thetas = valid_ik_solutions[0]
+
+
+            self.config_thetas[0] = math.degrees(self.config_thetas[0])
+            self.config_thetas[1] = math.degrees(self.config_thetas[1])
+            self.config_thetas[2] = math.degrees(self.config_thetas[2])
+            self.config_thetas[3] = math.degrees(self.config_thetas[3])
+            self.config_thetas[4] = math.degrees(self.config_thetas[4])
+
             self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "position processing done, found solution")
             #tmp = self.kinematics.offset2world(valid_ik_solutions[0])
             #send tmp to GUI
@@ -223,12 +237,23 @@ class Node(object):
     def process_writing(self):
         print("triggered writing")
         # TODO: implement Writing
-        # all letter coorinates are in font_size 10
+        # all letter coorinates are in font_size 10(10mm high)
         self.base_fs = 10.0
-        self.between_letter_margin = 0.001  # x coordinate
-        self.between_line_margin = 0.001    # y coordinate
+        self.letter_size_factor = self.config_fontsize/self.base_fs
+        self.between_letter_margin = self.letter_size_factor * 0.001  # x coordinate
+        self.between_line_margin = self.letter_size_factor * 0.003    # y coordinate
+        self.letter_size = self.letter_size_factor *0.001             # height of written letters in m
+
+        self.hoverOffset = 0.01             # z coordinate
+        self.line_ending_threshold = 0.1
+        self.start_line_offset = -0.05
+
+
         # set start position of writing in write_plane coordinates
-        current_write_pos = np.array([ -0.05, -0.1 ])
+        current_write_pos = np.matrix([ self.start_line_offset, -self.line_ending_threshold, self.hoverOffset]).transpose()     # is always in hoveroffset
+
+        # at the start of writing go to the start position in linear movement to prevent collisions
+        self.process_linear_movement(current_write_pos, True)
 
 
         for letter in self.data_string:
@@ -237,27 +262,32 @@ class Node(object):
             if not pointlist:
                 print(letter), ("is not yet in the letter database and will be skipt during writing process")
             else:
-                # TODO: implement transformation handling for the individual letters, etc.
-                hoverOffset = 0.01
-                # move from current position to next letter position
-                toNextLetter = np.array([ np.matrix([self.config_pos[0], self.config_pos[1], self.config_pos[2]]).transpose(),
-                                            np.matrix([float(pointlist[0][0] * (self.config_fontsize/self.base_fs)), float(pointlist[0][1]), (float(pointlist[0][2]) + hoverOffset)]).transpose(),
+                # transform pointlist to current write position     # let out z coordinate
+                for point in pointlist:
+                    point[0] = point[0] + current_write_pos[0]
+                    point[1] = point[1] + current_write_pos[1]
+
+                # move from current position to next write position with hoveroffset and then to the write plane
+                toNextLetter = np.array([ np.matrix([current_write_pos[0], current_write_pos[1], current_write_pos[2]]).transpose(),
                                             np.matrix([float(pointlist[0][0]), float(pointlist[0][1]), float(pointlist[0][2]) ]).transpose() ])
                 self.process_linear_movement(toNextLetter, True)
 
+                # transform pointlist to current position
                 self.process_linear_movement(pointlist, True)
 
                 # move to hover position
-                toHoverPos = np.array([ np.matrix([float(self.config_pos[0]), float(self.config_pos[1]), float(self.config_pos[2])]).transpose(),
-                                            np.matrix([float(self.config_pos[0]), float(self.config_pos[1]), (float(self.config_pos[2]) + hoverOffset)]).transpose()    ])
-
+                toHoverPos = np.array([ np.matrix([float(self.config_cur_pos[0]), float(self.config_cur_pos[1]), (float(self.config_cur_pos[2]) + self.hoverOffset)]).transpose() ])
                 self.process_linear_movement(toHoverPos, True)
 
+                # update current write position
+                current_write_pos = self.config_cur_pos
 
-        #debugPointList = np.array([ np.matrix([0.05, 0.0, 0.05]).transpose(),
-        #                            np.matrix([-0.05, 0.0, 0.05]).transpose(),
-        #                            np.matrix([0.05, 0.0, 0.1]).transpose() ])
-        #self.process_linear_movement(debugPointList)
+                # before writing the next letter put in a margin
+                current_write_pos[1] = current_write_pos[1] + self.between_letter_margin
+
+                #check for line ending
+                if(current_write_pos[1] > self.line_ending_threshold):
+                    current_write_pos[0] = current_write_pos[0] + self.letter_size + self.between_line_margin
 
 
     def get_pointlist4letter(self, letter):
@@ -266,7 +296,7 @@ class Node(object):
         if(dbElement != None):
             dbPointlist = list(dbElement)
             for point in dbPointlist:
-                resPointlist.append(np.matrix([ float(point.attrib['x']), float(point.attrib['y']), float(point.attrib['z']) ]).transpose() )
+                resPointlist.append(np.matrix([ float(point.attrib['x'])*self.letter_size_factor, float(point.attrib['y'])*self.letter_size_factor, float(point.attrib['z'])*self.letter_size_factor ]).transpose() )
                 #print(" [%f; %f; %f]") %(float(point.attrib['x']), float(point.attrib['y']), float(point.attrib['z'])), letter
         else:
             print("ERROR: no element found with tag %s!") %(letter)
@@ -288,7 +318,7 @@ class Node(object):
 
         # process pointlist
         for i in point_list:
-            origin = self.config_pos
+            origin = self.config_cur_pos
             move_vec = np.array([ i[0] - origin[0], i[1] - origin[1], i[2] - origin[2] ])
             move_length = np.sqrt(move_vec[0]**2 + move_vec[1]**2 + move_vec[2]**2)
 
@@ -322,11 +352,21 @@ class Node(object):
 
                 if current_valid:
                     # TODO: take best solution
-                    self.config_thetas = valid_ik_solutions[0]
                     self.send_vrep_joint_targets(valid_ik_solutions[0], True)
+                    self.config_cur_pos = np.array([ i[0], i[1], i[2] ])
+                    self.config_thetas = valid_ik_solutions[0]
 
-            self.config_pos = np.array([ i[0], i[1], i[2] ])
-            self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "linear movement in progress...")
+                    self.config_thetas[0] = math.degrees(self.config_thetas[0])
+                    self.config_thetas[1] = math.degrees(self.config_thetas[1])
+                    self.config_thetas[2] = math.degrees(self.config_thetas[2])
+                    self.config_thetas[3] = math.degrees(self.config_thetas[3])
+                    self.config_thetas[4] = math.degrees(self.config_thetas[4])
+                    self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "linear movement in progress...")
+                    # sleep a moment to prevent unsynchronization
+                    time.sleep(0.2)     # sleep 0.1 sec
+
+            #self.config_current_pos = np.array([ i[0], i[1], i[2] ])
+            #self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "linear movement in progress...")
 
 
 
@@ -395,7 +435,8 @@ class Node(object):
             msg.Theta_3,
             msg.Theta_4,
             msg.Theta_5])
-        self.config_pos = np.array([msg.Pos_X,
+        #print("parse input: "), self.config_thetas
+        self.config_trgt_pos = np.array([msg.Pos_X,
             msg.Pos_Y,
             msg.Pos_Z])
 
@@ -409,14 +450,15 @@ class Node(object):
         msg.error=error_txt
 
         # setting GUI output
-        msg.Pos_X = self.config_pos[0]
-        msg.Pos_Y = self.config_pos[1]
-        msg.Pos_Z = self.config_pos[2]
-        msg.Theta_1 = self.config_thetas[0]
-        msg.Theta_2 = self.config_thetas[1]
-        msg.Theta_3 = self.config_thetas[2]
-        msg.Theta_4 = self.config_thetas[3]
-        msg.Theta_5 = self.config_thetas[4]
+        msg.Pos_X = self.config_cur_pos[0]
+        msg.Pos_Y = self.config_cur_pos[1]
+        msg.Pos_Z = self.config_cur_pos[2]
+        tmp = self.kinematics.offset2world(self.config_thetas)
+        msg.Theta_1 = tmp[0]
+        msg.Theta_2 = tmp[1]
+        msg.Theta_3 = tmp[2]
+        msg.Theta_4 = tmp[3]
+        msg.Theta_5 = tmp[4]
 
         self.status = nodestatus
         self.status_vrep = vrepstatus
