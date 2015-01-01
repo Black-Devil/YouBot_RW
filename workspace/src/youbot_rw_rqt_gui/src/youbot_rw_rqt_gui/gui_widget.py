@@ -135,6 +135,7 @@ class YouBotGuiWidget(QWidget):
         msg.Pos_Y=self.pos_y_doubleSpinBox.value()
         msg.Pos_Z=self.pos_z_doubleSpinBox.value()
         msg.letters=str(self.plainTextEdit_writeContent.toPlainText())
+        msg.Fontsize=self.fontsize_spinBox.value()
         if(self.processMode_comboBox.currentIndex() == 0):
             msg.processmode = status.PROCESSING_MODE_WRITING
             self.processMode = status.PROCESSING_MODE_WRITING
@@ -169,14 +170,16 @@ class YouBotGuiWidget(QWidget):
 	    if self.status_node_status == status.STATUS_NODE_NO_ERROR:
 	        self.set_status_text.emit(self.status_data_string)
 
-            if(self.processMode == status.PROCESSING_MODE_PTP_POSITION or self.processMode == status.PROCESSING_MODE_LIN_POSITION):
+            if(self.processMode == status.PROCESSING_MODE_PTP_POSITION or self.processMode == status.PROCESSING_MODE_LIN_POSITION
+                or self.processMode == status.PROCESSING_MODE_WRITING or self.processMode == status.PROCESSING_MODE_LOGO):
                 # set angles
                 self.theta_1_doubleSpinBox.setValue(msg.Theta_1)
                 self.theta_2_doubleSpinBox.setValue(msg.Theta_2)
                 self.theta_3_doubleSpinBox.setValue(msg.Theta_3)
                 self.theta_4_doubleSpinBox.setValue(msg.Theta_4)
                 self.theta_5_doubleSpinBox.setValue(msg.Theta_5)
-            elif(self.processMode == status.PROCESSING_MODE_PTP_ANGLES or self.processMode == status.PROCESSING_MODE_LIN_ANGLES):
+            if(self.processMode == status.PROCESSING_MODE_PTP_ANGLES or self.processMode == status.PROCESSING_MODE_LIN_ANGLES
+                or self.processMode == status.PROCESSING_MODE_WRITING or self.processMode == status.PROCESSING_MODE_LOGO):
                 # set pos
                 self.pos_x_doubleSpinBox.setValue(msg.Pos_X)
                 self.pos_y_doubleSpinBox.setValue(msg.Pos_Y)

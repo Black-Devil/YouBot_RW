@@ -152,6 +152,11 @@ class Node(object):
 
 	    #DO WRITING WITH ROBOT HERE
         if(self.config_processMode == status.PROCESSING_MODE_WRITING):
+            # just for debug
+            #self.config_trgt_pos = np.array([0.0, 0.0, 0.0])
+            #self.process_ptp_position()
+            #print("pos: [%.4f; %.4f; %.4f]" % (self.config_cur_pos[0],self.config_cur_pos[1],self.config_cur_pos[2]) )
+
             self.process_writing()
         elif(self.config_processMode == status.PROCESSING_MODE_LOGO):
             print("triggered logo")
@@ -164,6 +169,7 @@ class Node(object):
             self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "ERROR - linear movement through angle input is not implemented yet")
         elif(self.config_processMode == status.PROCESSING_MODE_PTP_POSITION):
             self.process_ptp_position()
+            print("pos: [%.4f; %.4f; %.4f]" % (self.config_cur_pos[0],self.config_cur_pos[1],self.config_cur_pos[2]) )
         elif(self.config_processMode == status.PROCESSING_MODE_LIN_POSITION):
             self.process_lin_position()
 
@@ -197,13 +203,21 @@ class Node(object):
 
     def process_ptp_position(self):
         print("triggered ptp position")
+        #time.sleep(0.2)
+
         tmpPos = np.matrix((self.config_trgt_pos[0],  self.config_trgt_pos[1],  self.config_trgt_pos[2])).transpose()
         #print "input ik", tmpPos
         valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(tmpPos, True, False)
+        print("debug get valid ik solutions")
+        #time.sleep(0.2)
+
         valid_sol = False
         if not valid_ik_solutions:
             # try again without fast calculation
             valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(tmpPos, False, False)
+            print("debug get valid ik solutions again")
+            #time.sleep(0.2)
+
             if not valid_ik_solutions:
                 print "// no valid ik solution possible! //"
                 self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "position processing not possible, found no ik solution")
@@ -239,21 +253,30 @@ class Node(object):
         # TODO: implement Writing
         # all letter coorinates are in font_size 10(10mm high)
         self.base_fs = 10.0
-        self.letter_size_factor = self.config_fontsize/self.base_fs
+        #print("fontsize: "), self.config_fontsize
+        #print("base fontsize: "), self.base_fs
+        self.letter_size_factor = float(self.config_fontsize)/self.base_fs
+        #print("letter size factor: "), self.letter_size_factor
         self.between_letter_margin = self.letter_size_factor * 0.001  # x coordinate
         self.between_line_margin = self.letter_size_factor * 0.003    # y coordinate
         self.letter_size = self.letter_size_factor *0.001             # height of written letters in m
 
         self.hoverOffset = 0.01             # z coordinate
         self.line_ending_threshold = 0.1
-        self.start_line_offset = -0.05
+        self.start_line_offset = -0.00
 
 
         # set start position of writing in write_plane coordinates
-        current_write_pos = np.matrix([ self.start_line_offset, -self.line_ending_threshold, self.hoverOffset]).transpose()     # is always in hoveroffset
+        current_write_pos = np.array([ self.start_line_offset, -self.line_ending_threshold, self.hoverOffset ])    # is always in hoveroffset
+
+
+        print("start write pos: "), current_write_pos
 
         # at the start of writing go to the start position in linear movement to prevent collisions
-        self.process_linear_movement(current_write_pos, True)
+        self.process_linear_movement( np.array([ current_write_pos ]), True)
+
+        print("moved to start write pos: [%.4f; %.4f; %.4f]" % (self.config_cur_pos[0],self.config_cur_pos[1],self.config_cur_pos[2]) )
+
 
 
         for letter in self.data_string:
@@ -262,25 +285,39 @@ class Node(object):
             if not pointlist:
                 print(letter), ("is not yet in the letter database and will be skipt during writing process")
             else:
+
+                print("raw pointlist: "), pointlist
+
                 # transform pointlist to current write position     # let out z coordinate
                 for point in pointlist:
-                    point[0] = point[0] + current_write_pos[0]
-                    point[1] = point[1] + current_write_pos[1]
+                    point[0] = float(point[0]) + current_write_pos[0]
+                    point[1] = float(point[1]) + current_write_pos[1]
+
+
+
 
                 # move from current position to next write position with hoveroffset and then to the write plane
-                toNextLetter = np.array([ np.matrix([current_write_pos[0], current_write_pos[1], current_write_pos[2]]).transpose(),
-                                            np.matrix([float(pointlist[0][0]), float(pointlist[0][1]), float(pointlist[0][2]) ]).transpose() ])
+                # TODO: find error in here (matrix dims)
+                #print("cur write pos_0: "), current_write_pos[0]
+                #print("pointlist 0 0: "), float(pointlist[0][0])
+
+                toNextLetter = np.array([ np.array([ current_write_pos[0], current_write_pos[1], current_write_pos[2]]),
+                                            np.array([ pointlist[0][0], pointlist[0][1], pointlist[0][2] ]) ])
+                print("toNextLetter: "), toNextLetter
                 self.process_linear_movement(toNextLetter, True)
 
+
+                print("transformed pointlist: "), pointlist
                 # transform pointlist to current position
                 self.process_linear_movement(pointlist, True)
 
                 # move to hover position
-                toHoverPos = np.array([ np.matrix([float(self.config_cur_pos[0]), float(self.config_cur_pos[1]), (float(self.config_cur_pos[2]) + self.hoverOffset)]).transpose() ])
+                toHoverPos = np.array([ np.array([ self.config_cur_pos[0], self.config_cur_pos[1], (self.config_cur_pos[2] + self.hoverOffset) ])  ])
+                print("toHoverPos: "), toHoverPos
                 self.process_linear_movement(toHoverPos, True)
 
                 # update current write position
-                current_write_pos = self.config_cur_pos
+                current_write_pos = np.array([ self.config_cur_pos[0], self.config_cur_pos[1], self.config_cur_pos[2] ])
 
                 # before writing the next letter put in a margin
                 current_write_pos[1] = current_write_pos[1] + self.between_letter_margin
@@ -288,19 +325,35 @@ class Node(object):
                 #check for line ending
                 if(current_write_pos[1] > self.line_ending_threshold):
                     current_write_pos[0] = current_write_pos[0] + self.letter_size + self.between_line_margin
+                    current_write_pos[1] = -self.line_ending_threshold
+
+                print("== letter "), letter, (" done ==")
+
+        print("== writing done ==")
 
 
     def get_pointlist4letter(self, letter):
+        print("get pointlist for letter: "), letter
         dbElement = self.ldb_root.find(letter)
         resPointlist = list()
         if(dbElement != None):
             dbPointlist = list(dbElement)
             for point in dbPointlist:
-                resPointlist.append(np.matrix([ float(point.attrib['x'])*self.letter_size_factor, float(point.attrib['y'])*self.letter_size_factor, float(point.attrib['z'])*self.letter_size_factor ]).transpose() )
+                #print("xml point: "), point.attrib
+                #tmp_mat = np.matrix(( float(point.attrib['x']), float(point.attrib['y']), float(point.attrib['z']) )).transpose()
+                #print("tmp_mat: "), tmp_mat
+                #print("sizefactor: "), self.letter_size_factor
+                #tmp_mat[0] = tmp_mat[0] * self.letter_size_factor
+                #tmp_mat[1] = tmp_mat[1] * self.letter_size_factor
+                #print("tmp_mat with sizefactor: "), tmp_mat
+
+                resPointlist.append(np.array([ float(point.attrib['x'])*self.letter_size_factor, float(point.attrib['y'])*self.letter_size_factor, float(point.attrib['z'])*self.letter_size_factor ])  )
+                #resPointlist.append(tmp_mat)
                 #print(" [%f; %f; %f]") %(float(point.attrib['x']), float(point.attrib['y']), float(point.attrib['z'])), letter
         else:
             print("ERROR: no element found with tag %s!") %(letter)
 
+        #print("respointlist: "), resPointlist
         return resPointlist
 
 
@@ -319,6 +372,8 @@ class Node(object):
         # process pointlist
         for i in point_list:
             origin = self.config_cur_pos
+            print("lin_move from: "), origin, (" to: "), i
+
             move_vec = np.array([ i[0] - origin[0], i[1] - origin[1], i[2] - origin[2] ])
             move_length = np.sqrt(move_vec[0]**2 + move_vec[1]**2 + move_vec[2]**2)
 
@@ -326,6 +381,7 @@ class Node(object):
             step_count_float = move_length/step_size
             step_vec = np.array([ move_vec[0] / step_count_float, move_vec[1] / step_count_float, move_vec[2] / step_count_float ])
             #print("current point: "), i
+            #print("stepcount: "), step_count_int
 
             # process single point out of pointlist
             for k in range(1,step_count_int+1):
@@ -361,12 +417,16 @@ class Node(object):
                     self.config_thetas[2] = math.degrees(self.config_thetas[2])
                     self.config_thetas[3] = math.degrees(self.config_thetas[3])
                     self.config_thetas[4] = math.degrees(self.config_thetas[4])
-                    self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "linear movement in progress...")
+                    # TODO: sending status to gui here produces sometimes memory errors (WTF!)
+                    #self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "linear movement in progress...")
                     # sleep a moment to prevent unsynchronization
-                    time.sleep(0.2)     # sleep 0.1 sec
+                    #tmp_wait = 0.1
+                    #print("wait")
+                    #time.sleep(tmp_wait)     # sleep 0.1 sec
+                    #print("waited for "), tmp_wait, ("sec")
 
             #self.config_current_pos = np.array([ i[0], i[1], i[2] ])
-            #self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "linear movement in progress...")
+            self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "linear movement in progress...")
 
 
 
