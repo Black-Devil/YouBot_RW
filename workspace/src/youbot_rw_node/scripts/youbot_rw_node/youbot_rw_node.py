@@ -68,12 +68,13 @@ class Node(object):
             0.0,
             0.0,
             0.0])
-        self.config_cur_pos = np.array([0.0,
-            0.0,
-            0.0])
-        self.config_trgt_pos = np.array([0.0,
-            0.0,
-            0.0])
+        self.config_cur_pos = np.array([np.nan,
+            np.nan,
+            np.nan])
+        self.config_trgt_pos = np.array([np.nan,
+            np.nan,
+            np.nan])
+        self.init_pos = False
 
         # parse xml letter database
         script_path = os.path.dirname(os.path.abspath(__file__))
@@ -152,12 +153,15 @@ class Node(object):
 
 	    #DO WRITING WITH ROBOT HERE
         if(self.config_processMode == status.PROCESSING_MODE_WRITING):
-            # just for debug
-            #self.config_trgt_pos = np.array([0.0, 0.0, 0.0])
-            #self.process_ptp_position()
-            #print("pos: [%.4f; %.4f; %.4f]" % (self.config_cur_pos[0],self.config_cur_pos[1],self.config_cur_pos[2]) )
-
-            self.process_writing()
+            if(self.init_pos == False):
+                print("WARNING - programm is not yet initialized complete! The robot position is unknown! Therefor a ptp movement to position [0,0,0] is processed first.")
+                tmp = self.config_trgt_pos
+                self.config_trgt_pos = np.array([0.0, 0.0, 0.0])
+                self.process_ptp_position()
+                self.config_trgt_pos = tmp
+                self.process_writing()
+            else:
+                self.process_writing()
         elif(self.config_processMode == status.PROCESSING_MODE_LOGO):
             print("triggered logo")
             # TODO: implement Logo
@@ -171,7 +175,15 @@ class Node(object):
             self.process_ptp_position()
             print("pos: [%.4f; %.4f; %.4f]" % (self.config_cur_pos[0],self.config_cur_pos[1],self.config_cur_pos[2]) )
         elif(self.config_processMode == status.PROCESSING_MODE_LIN_POSITION):
-            self.process_lin_position()
+            if(self.init_pos == False):
+                print("WARNING - programm is not yet initialized complete! The robot position is unknown! Therefor a ptp movement to position [0,0,0] is processed first.")
+                tmp = self.config_trgt_pos
+                self.config_trgt_pos = np.array([0.0, 0.0, 0.0])
+                self.process_ptp_position()
+                self.config_trgt_pos = tmp
+                self.process_lin_position()
+            else:
+                self.process_lin_position()
 
 
 	    #self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "movement in progress")
@@ -187,6 +199,7 @@ class Node(object):
         if(self.kinematics.isSolutionValid(np.deg2rad(tmp))):
             self.send_vrep_joint_targets(tmp, False)
             self.config_cur_pos = self.kinematics.direct_kin(np.deg2rad(tmp))
+            self.init_pos = True
             print("pos: [%.4f; %.4f; %.4f]" % (self.config_cur_pos[0],self.config_cur_pos[1],self.config_cur_pos[2]) )
             pos_wp = self.kinematics.direct_kin_2_wristPoint(np.deg2rad(tmp))
             print("pos_wp: [%.4f; %.4f; %.4f]" % (pos_wp[0],pos_wp[1],pos_wp[2]) )
@@ -234,6 +247,7 @@ class Node(object):
 
             self.send_vrep_joint_targets(valid_ik_solutions[0], True)
             self.config_cur_pos = self.kinematics.direct_kin(valid_ik_solutions[0])
+            self.init_pos = True
             self.config_thetas = valid_ik_solutions[0]
 
 
@@ -249,7 +263,7 @@ class Node(object):
 
 
     def process_writing(self):
-        print("triggered writing")
+        print("== triggered writing ==")
         # TODO: implement Writing
         # all letter coorinates are in font_size 10(10mm high)
         self.base_fs = 10.0
@@ -368,6 +382,7 @@ class Node(object):
         # calc step size
         step_size = 0.002
         #max_step = int(1.0/step_size)
+        last_angles = np.array([ -1, -1, -1, -1, -1 ])
 
         # process pointlist
         for i in point_list:
@@ -408,8 +423,10 @@ class Node(object):
 
                 if current_valid:
                     # TODO: take best solution
+                    # TODO: check for singularities
                     self.send_vrep_joint_targets(valid_ik_solutions[0], True)
                     self.config_cur_pos = np.array([ i[0], i[1], i[2] ])
+                    self.init_pos = True
                     self.config_thetas = valid_ik_solutions[0]
 
                     self.config_thetas[0] = math.degrees(self.config_thetas[0])
