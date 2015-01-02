@@ -209,26 +209,27 @@ class Node(object):
 
 
     def process_lin_position(self):
-        print("triggered lin position")
+        print("== triggered lin position ==")
         tmpPos = list()
-        tmpPos.append(np.matrix((self.config_trgt_pos[0],  self.config_trgt_pos[1],  self.config_trgt_pos[2])).transpose())
-        self.process_linear_movement(tmpPos, False)
+        tmpPos.append( np.array([self.config_trgt_pos[0],  self.config_trgt_pos[1],  self.config_trgt_pos[2]]) )
+        self.process_linear_movement(tmpPos, False, True)
+        print("== lin position movement done==")
 
     def process_ptp_position(self):
-        print("triggered ptp position")
+        print("== triggered ptp position ==")
         #time.sleep(0.2)
 
         tmpPos = np.matrix((self.config_trgt_pos[0],  self.config_trgt_pos[1],  self.config_trgt_pos[2])).transpose()
         #print "input ik", tmpPos
-        valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(tmpPos, True, False)
-        print("debug get valid ik solutions")
+        valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(tmpPos, True, False, False)
+        #print("debug get valid ik solutions")
         #time.sleep(0.2)
 
         valid_sol = False
         if not valid_ik_solutions:
             # try again without fast calculation
-            valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(tmpPos, False, False)
-            print("debug get valid ik solutions again")
+            valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(tmpPos, False, False, False)
+            #print("debug get valid ik solutions again")
             #time.sleep(0.2)
 
             if not valid_ik_solutions:
@@ -245,6 +246,8 @@ class Node(object):
             #dk_pos = self.kinematics.direct_kin(valid_ik_solutions[0], True)
             #print "dk_pos: [%.4f; %.4f; %.4f]" % (dk_pos[0],dk_pos[1],dk_pos[2])
 
+            #print("debug solutions:"),valid_ik_solutions
+
             self.send_vrep_joint_targets(valid_ik_solutions[0], True)
             self.config_cur_pos = self.kinematics.direct_kin(valid_ik_solutions[0])
             self.init_pos = True
@@ -260,17 +263,14 @@ class Node(object):
             self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "position processing done, found solution")
             #tmp = self.kinematics.offset2world(valid_ik_solutions[0])
             #send tmp to GUI
+            print("== ptp position movement done==")
 
 
     def process_writing(self):
         print("== triggered writing ==")
-        # TODO: implement Writing
         # all letter coorinates are in font_size 10(10mm high)
         self.base_fs = 10.0
-        #print("fontsize: "), self.config_fontsize
-        #print("base fontsize: "), self.base_fs
         self.letter_size_factor = float(self.config_fontsize)/self.base_fs
-        #print("letter size factor: "), self.letter_size_factor
         self.between_letter_margin = self.letter_size_factor * 0.001  # x coordinate
         self.between_line_margin = self.letter_size_factor * 0.003    # y coordinate
         self.letter_size = self.letter_size_factor *0.001             # height of written letters in m
@@ -283,14 +283,13 @@ class Node(object):
         # set start position of writing in write_plane coordinates
         current_write_pos = np.array([ self.start_line_offset, -self.line_ending_threshold, self.hoverOffset ])    # is always in hoveroffset
 
+        #print("start write pos: "), current_write_pos
 
-        print("start write pos: "), current_write_pos
-
-        # at the start of writing go to the start position in linear movement to prevent collisions
-        self.process_linear_movement( np.array([ current_write_pos ]), True)
+        # at the start of writing go to the start position in linear movement without singularity checking to prevent collisions
+        # TODO: without singularity checking
+        self.process_linear_movement( np.array([ current_write_pos ]), True, False)
 
         print("moved to start write pos: [%.4f; %.4f; %.4f]" % (self.config_cur_pos[0],self.config_cur_pos[1],self.config_cur_pos[2]) )
-
 
 
         for letter in self.data_string:
@@ -299,7 +298,6 @@ class Node(object):
             if not pointlist:
                 print(letter), ("is not yet in the letter database and will be skipt during writing process")
             else:
-
                 print("raw pointlist: "), pointlist
 
                 # transform pointlist to current write position     # let out z coordinate
@@ -307,28 +305,20 @@ class Node(object):
                     point[0] = float(point[0]) + current_write_pos[0]
                     point[1] = float(point[1]) + current_write_pos[1]
 
-
-
-
                 # move from current position to next write position with hoveroffset and then to the write plane
-                # TODO: find error in here (matrix dims)
-                #print("cur write pos_0: "), current_write_pos[0]
-                #print("pointlist 0 0: "), float(pointlist[0][0])
-
                 toNextLetter = np.array([ np.array([ current_write_pos[0], current_write_pos[1], current_write_pos[2]]),
                                             np.array([ pointlist[0][0], pointlist[0][1], pointlist[0][2] ]) ])
                 print("toNextLetter: "), toNextLetter
-                self.process_linear_movement(toNextLetter, True)
+                self.process_linear_movement(toNextLetter, True, True)
 
-
-                print("transformed pointlist: "), pointlist
                 # transform pointlist to current position
-                self.process_linear_movement(pointlist, True)
+                print("transformed pointlist: "), pointlist
+                self.process_linear_movement(pointlist, True, True)
 
                 # move to hover position
                 toHoverPos = np.array([ np.array([ self.config_cur_pos[0], self.config_cur_pos[1], (self.config_cur_pos[2] + self.hoverOffset) ])  ])
                 print("toHoverPos: "), toHoverPos
-                self.process_linear_movement(toHoverPos, True)
+                self.process_linear_movement(toHoverPos, True, True)
 
                 # update current write position
                 current_write_pos = np.array([ self.config_cur_pos[0], self.config_cur_pos[1], self.config_cur_pos[2] ])
@@ -371,7 +361,7 @@ class Node(object):
         return resPointlist
 
 
-    def process_linear_movement(self, point_list, limit_solution):
+    def process_linear_movement(self, point_list, limit_solution, check_singularities):
         """ takes np.array of 3d points(np.matrix) and processes linear movement from current position to all points
 
         :param todo
@@ -382,7 +372,10 @@ class Node(object):
         # calc step size
         step_size = 0.002
         #max_step = int(1.0/step_size)
-        last_angles = np.array([ -1, -1, -1, -1, -1 ])
+
+        # init on current angles
+        last_angles = self.config_thetas
+        last_condition = -1
 
         # process pointlist
         for i in point_list:
@@ -410,10 +403,10 @@ class Node(object):
                     current_trgt = np.array([ origin[0] + k*step_vec[0], origin[1] + k*step_vec[1], origin[2] + k*step_vec[2]])
 
                 # calc inverse kinematik for current point
-                valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, True, limit_solution)
+                valid_ik_solutions, valid_ik_solutions_condition = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, True, limit_solution, True)
                 if not valid_ik_solutions:
                     #try again without fast calculation
-                    valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, False, limit_solution)
+                    valid_ik_solutions, valid_ik_solutions_condition = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, False, limit_solution, True)
                     if not valid_ik_solutions:
                         print("Found no ik solution for point(%.4f; %.4f; %.4f). Processing goes on with next point.") %(current_trgt[0], current_trgt[1], current_trgt[2])
                     else:
@@ -422,12 +415,46 @@ class Node(object):
                     current_valid = True
 
                 if current_valid:
-                    # TODO: take best solution
-                    # TODO: check for singularities
-                    self.send_vrep_joint_targets(valid_ik_solutions[0], True)
+
+                    # TODO: check for singularities in angles
+                    # search solutions without singularities
+                    if(check_singularities):
+                        valid_sol_nosing = list()
+                        valid_sol_nosing_cond = list()
+                        int_counter = -1
+                        for s in valid_ik_solutions:
+                            int_counter = int_counter + 1
+                            has_sing = False
+                            if(last_condition != -1):
+                                if( (s[0] > 0.0 and last_angles[0] < 0.0) or (s[0] < 0.0 and last_angles[0] > 0.0)): has_sing = True
+                                if( (s[1] > 0.0 and last_angles[1] < 0.0) or (s[1] < 0.0 and last_angles[1] > 0.0)): has_sing = True
+                                if( (s[2] > 0.0 and last_angles[2] < 0.0) or (s[2] < 0.0 and last_angles[2] > 0.0)): has_sing = True
+                                if( (s[3] > 0.0 and last_angles[3] < 0.0) or (s[3] < 0.0 and last_angles[3] > 0.0)): has_sing = True
+
+                            if not has_sing:
+                                valid_sol_nosing.append(s)
+                                valid_sol_nosing_cond.append(valid_ik_solutions_condition[int_counter])
+
+                        # if singularity is not preventable, hover and go to new condition
+                        if not valid_sol_nosing:
+                            print("!!! SINGULARITY happened !!!")
+                            best_sol = valid_ik_solutions[0]
+                            last_condition = valid_ik_solutions_condition[0]
+                        else:
+                            best_sol, last_condition = self.get_best_sol_through_condition(last_condition, valid_sol_nosing, valid_sol_nosing_cond)
+                            #print("cur_condition:"), last_condition
+                            # TODO: if condition changes, handle this
+
+                    else:
+                        best_sol = valid_ik_solutions[0]
+                    
+                    # do the movement
+                    self.send_vrep_joint_targets(best_sol, True)
                     self.config_cur_pos = np.array([ i[0], i[1], i[2] ])
                     self.init_pos = True
-                    self.config_thetas = valid_ik_solutions[0]
+                    self.config_thetas = best_sol
+
+                    last_angles = best_sol
 
                     self.config_thetas[0] = math.degrees(self.config_thetas[0])
                     self.config_thetas[1] = math.degrees(self.config_thetas[1])
@@ -445,6 +472,26 @@ class Node(object):
             #self.config_current_pos = np.array([ i[0], i[1], i[2] ])
             self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "linear movement in progress...")
 
+
+
+    def get_best_sol_through_condition(self, last_condition, solutions, solutions_cond):
+        if not solutions:
+            print("WARNING: solutions is empty")
+            return -1, -1
+
+        if(last_condition == -1):
+            # take first solution
+            return solutions[0], solutions_cond[0]
+
+        else:
+            # take best solution
+            int_counter = -1
+            for s in solutions_cond:
+                int_counter = int_counter + 1
+                if(s == last_condition):
+                    return solutions[int_counter], s
+            print("WARNING: condition changed in this step")
+            return solutions[0], solutions_cond[0]
 
 
     def callback_vrep_joint_states(self,msg):
