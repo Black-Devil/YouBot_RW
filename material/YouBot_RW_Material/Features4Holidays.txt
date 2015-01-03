@@ -3,18 +3,18 @@
       	erhält Punktkette eines Buchstaben; fährt von der aktuellen Position kollisionsfrei mit linearer Bewegung an die Position über dem Buchstaben(gewisser Offset in Z); fährt dann an den ersten Punkt des Buchstaben in linearer Bewegung; fährt dann alle Punkte des Buchstaben in linearer Bewegung ab und schaltet das Zeichnen dabei ein; fährt dann in linearer Bewegung ohne Zeichnen in die Position über dem Buchstaben(jetzt über dem letzten Punkt des Buchstaben);
 	      
 [done]    -->[M] GUI entsprechend angepasst und Eingabemöglichkeiten entsprechend in Ros-Message integriert:
-		-dropbox für processingMode(Writing, Logo, PTP_positon, PTP_angles, LIN_position, LIN_angles)
+[done]		-dropbox für processingMode(Writing, Logo, PTP_positon, PTP_angles, LIN_position, LIN_angles)
 
-    --> Singularitäten checken und abfangen
+[in progress]    --> Singularitäten checken und abfangen
     -->[j] Zeichnen VREP für Buchstaben optimieren/ermöglichen
     
     
 -Buchstaben Datenbank:
     --> Datenbank aufbauen (XML)
 [done]    --> Einlese-Funktion
-    --> Transformationsfunktion für Buchstabe zu Schreibunterlage
-    --> Schriftgrößen-Feature integrieren
-    --> Zeichen für nicht implementierte Buchstaben verwenden
+[done]    --> Transformationsfunktion für Buchstabe zu Schreibunterlage
+[done]    --> Schriftgrößen-Feature integrieren
+[done]    --> Zeichen für nicht implementierte Buchstaben verwenden
     
     
 -optionale Features:

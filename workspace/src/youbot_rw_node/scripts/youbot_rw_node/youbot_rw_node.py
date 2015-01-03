@@ -296,18 +296,22 @@ class Node(object):
             # search letter in database
             pointlist = self.get_pointlist4letter(letter)
             if not pointlist:
-                print(letter), ("is not yet in the letter database and will be skipt during writing process")
+                print(letter), ("WTF! THIS SHOULD NEVER HAPPEN!")
             else:
                 print("raw pointlist: "), pointlist
 
                 # transform pointlist to current write position     # let out z coordinate
+                max_y_of_pointlist = current_write_pos[1]
                 for point in pointlist:
                     point[0] = float(point[0]) + current_write_pos[0]
                     point[1] = float(point[1]) + current_write_pos[1]
+                    if(point[1] > max_y_of_pointlist):
+                        max_y_of_pointlist = point[1]
 
                 # move from current position to next write position with hoveroffset and then to the write plane
                 toNextLetter = np.array([ np.array([ current_write_pos[0], current_write_pos[1], current_write_pos[2]]),
-                                            np.array([ pointlist[0][0], pointlist[0][1], pointlist[0][2] ]) ])
+                                          np.array([ pointlist[0][0], pointlist[0][1], self.hoverOffset ]),
+                                          np.array([ pointlist[0][0], pointlist[0][1], pointlist[0][2] ]) ])
                 print("toNextLetter: "), toNextLetter
                 self.process_linear_movement(toNextLetter, True, True)
 
@@ -323,8 +327,8 @@ class Node(object):
                 # update current write position
                 current_write_pos = np.array([ self.config_cur_pos[0], self.config_cur_pos[1], self.config_cur_pos[2] ])
 
-                # before writing the next letter put in a margin
-                current_write_pos[1] = current_write_pos[1] + self.between_letter_margin
+                # before writing the next letter put in a margin after most right position of letter
+                current_write_pos[1] = max_y_of_pointlist + self.between_letter_margin
 
                 #check for line ending
                 if(current_write_pos[1] > self.line_ending_threshold):
@@ -340,6 +344,10 @@ class Node(object):
         print("get pointlist for letter: "), letter
         dbElement = self.ldb_root.find(letter)
         resPointlist = list()
+        if(dbElement == None):
+            dbElement = self.ldb_root.find("NOT_IMPL")
+            print("WARNING: no element found with tag %s!") %(letter)
+
         if(dbElement != None):
             dbPointlist = list(dbElement)
             for point in dbPointlist:
@@ -356,7 +364,6 @@ class Node(object):
                 #print(" [%f; %f; %f]") %(float(point.attrib['x']), float(point.attrib['y']), float(point.attrib['z'])), letter
         else:
             print("ERROR: no element found with tag %s!") %(letter)
-
         #print("respointlist: "), resPointlist
         return resPointlist
 
