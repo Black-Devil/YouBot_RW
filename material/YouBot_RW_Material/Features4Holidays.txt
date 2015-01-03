@@ -10,7 +10,7 @@
     
     
 -Buchstaben Datenbank:
-    --> Datenbank aufbauen (XML)
+[in progress]    --> Datenbank aufbauen (XML)
 [done]    --> Einlese-Funktion
 [done]    --> Transformationsfunktion für Buchstabe zu Schreibunterlage
 [done]    --> Schriftgrößen-Feature integrieren

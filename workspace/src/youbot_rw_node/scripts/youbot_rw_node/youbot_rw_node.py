@@ -350,21 +350,26 @@ class Node(object):
 
         if(dbElement != None):
             dbPointlist = list(dbElement)
+            isHovering = False
             for point in dbPointlist:
-                #print("xml point: "), point.attrib
-                #tmp_mat = np.matrix(( float(point.attrib['x']), float(point.attrib['y']), float(point.attrib['z']) )).transpose()
-                #print("tmp_mat: "), tmp_mat
-                #print("sizefactor: "), self.letter_size_factor
-                #tmp_mat[0] = tmp_mat[0] * self.letter_size_factor
-                #tmp_mat[1] = tmp_mat[1] * self.letter_size_factor
-                #print("tmp_mat with sizefactor: "), tmp_mat
 
+                # handle hover from last point
+                if(isHovering):
+                    isHovering = False
+                    resPointlist.append(np.array([ float(point.attrib['x'])*self.letter_size_factor, float(point.attrib['y'])*self.letter_size_factor, self.hoverOffset ])  )
+
+                # append point coordinates
                 resPointlist.append(np.array([ float(point.attrib['x'])*self.letter_size_factor, float(point.attrib['y'])*self.letter_size_factor, float(point.attrib['z'])*self.letter_size_factor ])  )
-                #resPointlist.append(tmp_mat)
-                #print(" [%f; %f; %f]") %(float(point.attrib['x']), float(point.attrib['y']), float(point.attrib['z'])), letter
+
+                # handle hover to next point
+                if( int(point.attrib['hov2nxt']) == 1 ):
+                    print("= HOVER2NEXT =")
+                    isHovering = True
+                    resPointlist.append(np.array([ float(point.attrib['x'])*self.letter_size_factor, float(point.attrib['y'])*self.letter_size_factor, self.hoverOffset ])  )
+
         else:
             print("ERROR: no element found with tag %s!") %(letter)
-        #print("respointlist: "), resPointlist
+
         return resPointlist
 
 
