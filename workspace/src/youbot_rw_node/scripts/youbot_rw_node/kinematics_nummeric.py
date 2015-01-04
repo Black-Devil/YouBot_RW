@@ -196,15 +196,20 @@ test = Kinematics_num()
 joints = [0, 0, 0, 0, 0]
 err_old = np.array(joints)
 
+get=False
+
 rospy.init_node('kinPublisher', anonymous=True)
 
 
 def callback(data):
+
     joints[0] = data.position[9]
     joints[1] = data.position[10]
     joints[2] = data.position[11]
     joints[3] = data.position[12]
     joints[4] = data.position[13]
+    global get
+    get = True
 
 
 rospy.Subscriber("/vrep/youbot_rw/joint_states", JointState, callback)
@@ -291,10 +296,14 @@ def wait_untel_pos_eq(target_pos):
     TriggerSimualtion()
     err = abs(np.array(target_pos) - np.array(joints))
     global err_old
-    while (err != err_old).all():
+    global get
+    while (err != err_old).all() or not get:
+        global err_old
+        global get
+        global joints
         err_old = err
         TriggerSimualtion()
-        sleep(0.1)
+        #sleep(0.1)
         print "trigger"
 
 
@@ -305,8 +314,8 @@ TriggerSimualtion()
 TriggerSimualtion()
 TriggerSimualtion()
 TriggerSimualtion()
-for i in xrange(0, 210, 1):
-    erg = test.step_to_point([-0.05 + i / 1000., 0.0, 0.04])
+for i in xrange(0, 2100, 1):
+    erg = test.step_to_point([-0.05 + i / 10000., 0.0, 0.04])
     if erg is not None:
         pub.publish(erg[0])
         pub1.publish(erg[1])
