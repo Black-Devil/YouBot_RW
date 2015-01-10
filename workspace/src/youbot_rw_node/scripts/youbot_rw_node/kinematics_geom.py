@@ -2,6 +2,7 @@
 
 import math
 import numpy as np
+from numpy.core.multiarray import int_asbuffer
 from kinematics_base import Kinematics_base
 
 from numpy import sin, cos, arctan2, arccos
@@ -338,17 +339,20 @@ class Kinematics_geom(Kinematics_base):
         :rtype: todo
         """
         if len(solution) != 5:
+            #print("length is not 5!")
             return False
         for i in range(0,len(solution)):
             if math.isnan(solution[i]):
+                #print("index"), i, ("is nan!")
                 return False
             elif solution[i] < self.min_angles_[i] or solution[i] > self.max_angles_[i]:
+                #print("index:"), i, (" %.4f [%.4f; %.4f]") %(solution[i], self.min_angles_[i], self.max_angles_[i])
                 return False
 
         return True
 
 
-    def get_valid_inverse_kin_solutions(self, point):
+    def get_valid_inverse_kin_solutions(self, point, fastCalc, limit_solution, return_conditions):
         """ todo
 
         :param todo
@@ -357,23 +361,55 @@ class Kinematics_geom(Kinematics_base):
         :rtype: todo
         """
         #ik_solutions = self.inverse_kin(point, condition_angle)
-        condition_angle = np.array([ 45.0, 50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0 ])
-        ik_solutions = list()
+        condition_angle = np.array
+        if(fastCalc):
+            condition_angle = np.array([ 5.0, 25.0, 45.0, 65])
+        else:
+            condition_angle = np.array([ 0.0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0 , 50.0, 55.0, 60.0, 65.0])
+        #ik_solutions = list()
+        #ik_solutions_condition = list()
+
+        valid_solutions = list()
+        valid_solutions_condition = list()
         for i in range(0,len(condition_angle)):
             #print "condition: ", condition_angle[i]
             tmpSol =  self.inverse_kin(point, condition_angle[i])
             for k in tmpSol:
-                ik_solutions.append(k)
+                if self.isSolutionValid(k) == True:
+                    if not (limit_solution):
+                        valid_solutions.append(k)
+                        valid_solutions_condition.append(condition_angle[i])
+                    else:
+                        if(k[0] < (np.pi/2) and k[0] > -(np.pi/2)):
+                            valid_solutions.append(k)
+                            valid_solutions_condition.append(condition_angle[i])
 
-        valid_solutions = list()
-        for i in ik_solutions:
-            if self.isSolutionValid(i) == True:
-                valid_solutions.append(i)
+        #valid_solutions = list()
+        #valid_solutions_condition = list()
+        #int_count = -1
+        #for i in ik_solutions:
+        #    int_count = int_count + 1
+        #    if self.isSolutionValid(i) == True:
+        #        if not (limit_solution):
+        #            valid_solutions.append(i)
+        #            valid_solutions_condition.append(ik_solutions_condition[int_count])
+       #         else:
+       #             if(i[0] < (np.pi/2) and i[0] > -(np.pi/2)):
+       #                 valid_solutions.append(i)
+       #                 valid_solutions_condition.append(ik_solutions_condition[int_count])
 
-        print "valid solutions:"
-        for i in valid_solutions:
-            print "     [%.4f; %.4f; %.4f; %.4f; %.4f]" % ( math.degrees(i[0]), math.degrees(i[1]), math.degrees(i[2]), math.degrees(i[3]), math.degrees(i[4]) )
-            dk_pos = self.direct_kin(i)
-            print "             dk_pos: [%.4f; %.4f; %.4f]" % (dk_pos[0],dk_pos[1],dk_pos[2])
+        #print "valid solutions:"
+        #print valid_solutions, valid_solutions_condition
+        #int_count = -1
+        #for i in valid_solutions:
+        #    int_count = int_count + 1
 
-        return valid_solutions
+         #   print "   %.f  [%.4f; %.4f; %.4f; %.4f; %.4f]" % (valid_solutions_condition[int_count], math.degrees(i[0]), math.degrees(i[1]), math.degrees(i[2]), math.degrees(i[3]), math.degrees(i[4]) )
+            #dk_pos = self.direct_kin(i)
+            #print "             dk_pos: [%.4f; %.4f; %.4f]" % (dk_pos[0],dk_pos[1],dk_pos[2])
+
+
+        if(return_conditions):
+            return valid_solutions, valid_solutions_condition
+        else:
+            return valid_solutions
