@@ -29,11 +29,17 @@ class Kinematics_num(Kinematics_base):
         # print self.last_solution
 
     def err_function(self, thetas):
+        """ Error function used for optimisation
+        @param thetas Arm-Joint Angles in radians.
+        """
         new_theta = [thetas[0], thetas[1], thetas[2], thetas[3], 0]
         errors = self.direct_kin(new_theta) - self.destination_point
         return (errors ** 2).sum()
 
     def ist_rund(self, point):
+        """ check point is around destination_point
+        @param point point to check
+        """
         if abs(point[0] - self.destination_point[0]) > 0.03:
             return False
         if abs(point[1] - self.destination_point[1]) > 0.03:
