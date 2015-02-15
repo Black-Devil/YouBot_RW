@@ -50,11 +50,18 @@ class Kinematics_num(Kinematics_base):
 
 
     def update_progresss(self, progress):
+        """ updates Progressbar
+        @param progress percent of progress
+        """
         sys.stdout.write('\r[{0}{1}] {2:3.2f}%'.format('#' * (int(progress / 2)), ' ' * ((100 / 2) - (int(progress / 2))), progress))
         sys.stdout.flush()
 
 
     def search_all_solutions(self, point, resolution):
+        """ solves the inverse kinematics problem
+        @param point point to reach
+        @param resolution Resolution of search tree in degree
+        """
         resolution = math.fabs(resolution)
         self.destination_point = point
         solutions = list()
@@ -104,6 +111,9 @@ class Kinematics_num(Kinematics_base):
 
 
     def find_best_solution(self, solutions):
+        """ finds and optimizes the best solution from a list of solutions
+        @param solutions list of solutions
+        """
         best_sol = np.array(solutions.pop(0))
         min = self.err_function(best_sol)
         for sol in solutions:
@@ -126,6 +136,9 @@ class Kinematics_num(Kinematics_base):
 
 
     def step_to_point(self, point):
+        """ Moves the arm to Point
+        @param point point to reach
+        """
         # print "Distance from arm: ", math.sqrt((point[0]+0.35)**2+(point[1])**2)
         if math.sqrt((point[0] + 0.35) ** 2 + (point[1]) ** 2) > 0.50:
             print "Point is not reachable"
@@ -161,7 +174,9 @@ class Kinematics_num(Kinematics_base):
 
 
     def checkSolution(self, solution):
-
+        """ Checked solution on validity and fault tolerance
+        @param solution solution to check
+        """
         if self.err_function(solution) > 0.0001 or not self.isSolutionValid(solution):
             return False
         else:
@@ -171,6 +186,9 @@ class Kinematics_num(Kinematics_base):
         return 0
 
     def minimize(self, startPoint):
+        """ minimize the distanze to destination point
+        @param startPoint Point to start the optimisation
+        """
         erg = minimize(self.err_function, startPoint[0:4], method='SLSQP', options={'maxiter': 1e6, 'disp': False},
                        bounds=[(self.min_angles_[0], self.max_angles_[0]), (self.min_angles_[1], self.max_angles_[1]),
                                (self.min_angles_[2], self.max_angles_[2]), (self.min_angles_[3], self.max_angles_[3])])
@@ -178,6 +196,9 @@ class Kinematics_num(Kinematics_base):
 
 
     def isSolutionValid(self, solution):
+        """ checks the solution validity, (angle bounds)
+        @param solution solution to check
+        """
         if len(solution) != 5:
             return False
         for i in range(0, len(solution)):
@@ -191,6 +212,10 @@ class Kinematics_num(Kinematics_base):
 
 
     def isSolutionValid_single(self, solution, number):
+        """ checks the solution validity for only one angle, (angle bounds)
+        @param solution solution to check
+        @param number Number of angle to check
+        """
         if solution < self.min_angles_[number] or solution > self.max_angles_[number]:
             return False
 
@@ -232,6 +257,8 @@ pub4 = rospy.Publisher('/youbot_rw/vrep/arm_joint5_target', Float64, queue_size=
 
 
 def pauseSimualtion():
+    """ pause Simulation in VRep
+    """
     rospy.wait_for_service('/vrep/simRosPauseSimulation')
     try:
         ret = rospy.ServiceProxy('/vrep/simRosPauseSimulation', simRosPauseSimulation)
@@ -242,6 +269,8 @@ def pauseSimualtion():
 
 
 def startSimualtion():
+    """ start Simulation in VRep
+    """
     rospy.wait_for_service('/vrep/simRosStartSimulation')
     try:
         ret = rospy.ServiceProxy('/vrep/simRosStartSimulation', simRosStartSimulation)
@@ -252,6 +281,8 @@ def startSimualtion():
 
 
 def stopSimualtion():
+    """ stop Simulation in VRep
+    """
     rospy.wait_for_service('/vrep/simRosStopSimulation')
     try:
         ret = rospy.ServiceProxy('/vrep/simRosStopSimulation', simRosStopSimulation)
@@ -262,6 +293,8 @@ def stopSimualtion():
 
 
 def setSyncSimualtion():
+    """ set Simulation in VRep to trigger mode
+    """
     rospy.wait_for_service('/vrep/simRosSynchronous')
     try:
         ret = rospy.ServiceProxy('/vrep/simRosSynchronous', simRosSynchronous)
@@ -272,6 +305,8 @@ def setSyncSimualtion():
 
 
 def TriggerSimualtion():
+    """ triggers an simulation step in VRep
+    """
     # rospy.wait_for_service('/vrep/simRosSynchronousTrigger')
     try:
         ret = rospy.ServiceProxy('/vrep/simRosSynchronousTrigger', simRosSynchronousTrigger)
@@ -282,6 +317,9 @@ def TriggerSimualtion():
 
 
 def wait_untel_pos(target_pos):
+    """ wait until position is reached, wait for error threshold
+    @param target_pos Postion to reach
+    """
     mini = 0.001
     err0 = abs(target_pos[0] - joints[0])
     err1 = abs(target_pos[1] - joints[1])
@@ -298,6 +336,9 @@ def wait_untel_pos(target_pos):
 
 
 def wait_untel_pos_eq(target_pos):
+    """ wait until position is reached, wait for stable error0
+    @param target_pos Postion to reach
+    """
     global joints
     TriggerSimualtion()
     err = abs(np.array(target_pos) - np.array(joints))
