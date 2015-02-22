@@ -83,12 +83,11 @@ class Kinematics_geom(Kinematics_base):
 
 
     def inverse_kin( self, point , condition_angle):
-        """ calculate the inverse kinematics
+        """ inverse kinematic calculation
 
-        :param point on write plane, (x;y;z)
-        :type todo
-        :returns: possible solutions of inverse kinematic
-        :rtype: list of( arrays of floats)
+        @param [in] point <b><i><c> [point_type]: </c></i></b> point desc
+        @param [in] condition_angle <b><i><c> [condition_angle_type]: </c></i></b> condition_angle desc
+        @return <b><i><c> [return_type]: </c></i></b> return desc
         """
 
         tcp= np.matrix(( float(point[0]), float(point[1]), float(point[2]),float(1) )).transpose()
