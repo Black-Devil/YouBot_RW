@@ -1,7 +1,0 @@
-/**
-\mainpage
-\htmlinclude manifest.html
-
-\b rqt_bag_test provides a GUI plugin for displaying and replaying ROS bag files.
-
-*/
