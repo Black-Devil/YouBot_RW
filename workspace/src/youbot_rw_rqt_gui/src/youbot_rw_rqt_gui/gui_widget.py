@@ -73,6 +73,8 @@ class YouBotGuiWidget(QWidget):
         self.processMode_comboBox.addItem("LIN Position")
         self.processMode_comboBox.addItem("LIN Angles")
 
+        self.processMode = status.PROCESSING_MODE_WRITING
+
         #self.my_node = rospy.init_node('youbot_rw_gui_node')
         self.pub_write_cmd = rospy.Publisher('/youbot_rw/gui2node', rw_node, tcp_nodelay=True,queue_size=1)
         rospy.Subscriber('/youbot_rw/node2gui', rw_node_state, self.callback_status_cmd)
