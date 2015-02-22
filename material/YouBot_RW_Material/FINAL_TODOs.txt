@@ -1,0 +1,5 @@
+1. Datenbank				[Julian]
+2. Doku-->Doxygen			[Marcel & Julian]
+3. Präsentation				[Marcel]
+4. Youbot am bewegen hindern(VREP)	[Julian]
+5. Nur beim Aufsetzen Schreiben(VREP)	[Julian]
