@@ -274,8 +274,9 @@ class Node(object):
 
     def process_writing(self):
         print("== triggered writing ==")
-        # all letter coorinates are in font_size 10(10mm high)
-        self.base_fs = 10.0
+        # all letter coorinates are in font_size 100(100mm high)
+        self.base_fs = 100.0
+        self.centimeter2meter_factor = 0.01
         self.letter_size_factor = float(self.config_fontsize)/self.base_fs
         self.between_letter_margin = self.letter_size_factor * 0.001  # x coordinate
         self.between_line_margin = self.letter_size_factor * 0.003    # y coordinate
@@ -347,6 +348,9 @@ class Node(object):
 
     def get_pointlist4letter(self, letter):
         print("get pointlist for letter: "), letter
+
+        # convert lowercase letters to upper case letters
+        letter = letter.upper()
         dbElement = self.ldb_root.find(letter)
         resPointlist = list()
         if(dbElement == None):
@@ -361,16 +365,16 @@ class Node(object):
                 # handle hover from last point
                 if(isHovering):
                     isHovering = False
-                    resPointlist.append(np.array([ float(point.attrib['x'])*self.letter_size_factor, float(point.attrib['y'])*self.letter_size_factor, self.hoverOffset ])  )
+                    resPointlist.append(np.array([ float(point.attrib['x'])*self.letter_size_factor*self.centimeter2meter_factor, float(point.attrib['y'])*self.letter_size_factor*self.centimeter2meter_factor, self.hoverOffset ])  )
 
                 # append point coordinates
-                resPointlist.append(np.array([ float(point.attrib['x'])*self.letter_size_factor, float(point.attrib['y'])*self.letter_size_factor, float(point.attrib['z'])*self.letter_size_factor ])  )
+                resPointlist.append(np.array([ float(point.attrib['x'])*self.letter_size_factor*self.centimeter2meter_factor, float(point.attrib['y'])*self.letter_size_factor*self.centimeter2meter_factor, float(point.attrib['z'])*self.letter_size_factor*self.centimeter2meter_factor ])  )
 
                 # handle hover to next point
                 if( int(point.attrib['hov2nxt']) == 1 ):
                     print("= HOVER2NEXT =")
                     isHovering = True
-                    resPointlist.append(np.array([ float(point.attrib['x'])*self.letter_size_factor, float(point.attrib['y'])*self.letter_size_factor, self.hoverOffset ])  )
+                    resPointlist.append(np.array([ float(point.attrib['x'])*self.letter_size_factor*self.centimeter2meter_factor, float(point.attrib['y'])*self.letter_size_factor*self.centimeter2meter_factor, self.hoverOffset ])  )
 
         else:
             print("ERROR: no element found with tag %s!") %(letter)
