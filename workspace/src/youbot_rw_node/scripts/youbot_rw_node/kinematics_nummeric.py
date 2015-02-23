@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 import math
 import sys
@@ -9,6 +9,8 @@ from numpy import sin, cos, arctan2, arccos
 from scipy.optimize import minimize
 from sensor_msgs.msg import JointState
 from vrep_common.srv import *
+from vrep_controll import *
+from sync import *
 
 from numpy.core.umath import arccos
 
@@ -140,9 +142,9 @@ class Kinematics_num(Kinematics_base):
         @param point point to reach
         """
         # print "Distance from arm: ", math.sqrt((point[0]+0.35)**2+(point[1])**2)
-        if math.sqrt((point[0] + 0.35) ** 2 + (point[1]) ** 2) > 0.50:
-            print "Point is not reachable"
-            return None
+        #if math.sqrt((point[0] + 0.35) ** 2 + (point[1]) ** 2) > 0.50:
+        #    print "Point is not reachable"
+        #    return None
 
         self.last_point = self.destination_point
         self.destination_point = point
@@ -157,14 +159,14 @@ class Kinematics_num(Kinematics_base):
             init_res = 10
             erg = self.minimize(self.init_point)
             while not self.checkSolution(erg):
-                if init_res < 1:
-                    print "Point is not reachable"
+                if init_res < 9:
+                    print "Point is not reachable, resolution 2 smal?"
                     return None
                 test = self.search_all_solutions(point, init_res)
                 if len(test) > 0:
                     erg = self.find_best_solution(test)
                     if not self.checkSolution(erg):
-                        print "Point is not reachable"
+                        print "Point is not reachable, error to high!"
                         return None
 
                 init_res -= 1
@@ -197,6 +199,7 @@ class Kinematics_num(Kinematics_base):
 
     def isSolutionValid(self, solution):
         """ checks the solution validity, (angle bounds)
+        @rtype : bool
         @param solution solution to check
         """
         if len(solution) != 5:
@@ -213,6 +216,7 @@ class Kinematics_num(Kinematics_base):
 
     def isSolutionValid_single(self, solution, number):
         """ checks the solution validity for only one angle, (angle bounds)
+        @rtype : bool
         @param solution solution to check
         @param number Number of angle to check
         """
@@ -222,28 +226,10 @@ class Kinematics_num(Kinematics_base):
         return True
 
 
+
 test = Kinematics_num()
 
-joints = [0, 0, 0, 0, 0]
-err_old = np.array(joints)
-
-get=False
-
 rospy.init_node('kinPublisher', anonymous=True)
-
-
-def callback(data):
-
-    joints[0] = data.position[9]
-    joints[1] = data.position[10]
-    joints[2] = data.position[11]
-    joints[3] = data.position[12]
-    joints[4] = data.position[13]
-    global get
-    get = True
-
-
-rospy.Subscriber("/vrep/youbot_rw/joint_states", JointState, callback)
 
 pub = rospy.Publisher('/youbot_rw/vrep/arm_joint1_target', Float64, queue_size=10)
 pub1 = rospy.Publisher('/youbot_rw/vrep/arm_joint2_target', Float64, queue_size=10)
@@ -253,133 +239,86 @@ pub4 = rospy.Publisher('/youbot_rw/vrep/arm_joint5_target', Float64, queue_size=
 
 # erg = test.step_to_point([0,0,0])
 
-
-
-
-def pauseSimualtion():
-    """ pause Simulation in VRep
-    """
-    rospy.wait_for_service('/vrep/simRosPauseSimulation')
-    try:
-        ret = rospy.ServiceProxy('/vrep/simRosPauseSimulation', simRosPauseSimulation)
-        return ret.call()
-    except rospy.ServiceException, e:
-        print "Service call failed: %s" % e
-        return -1
-
-
-def startSimualtion():
-    """ start Simulation in VRep
-    """
-    rospy.wait_for_service('/vrep/simRosStartSimulation')
-    try:
-        ret = rospy.ServiceProxy('/vrep/simRosStartSimulation', simRosStartSimulation)
-        return ret.call()
-    except rospy.ServiceException, e:
-        print "Service call failed: %s" % e
-        return -1
-
-
-def stopSimualtion():
-    """ stop Simulation in VRep
-    """
-    rospy.wait_for_service('/vrep/simRosStopSimulation')
-    try:
-        ret = rospy.ServiceProxy('/vrep/simRosStopSimulation', simRosStopSimulation)
-        return ret.call()
-    except rospy.ServiceException, e:
-        print "Service call failed: %s" % e
-        return -1
-
-
-def setSyncSimualtion():
-    """ set Simulation in VRep to trigger mode
-    """
-    rospy.wait_for_service('/vrep/simRosSynchronous')
-    try:
-        ret = rospy.ServiceProxy('/vrep/simRosSynchronous', simRosSynchronous)
-        return ret.call(True)
-    except rospy.ServiceException, e:
-        print "Service call failed: %s" % e
-        return -1
-
-
-def TriggerSimualtion():
-    """ triggers an simulation step in VRep
-    """
-    # rospy.wait_for_service('/vrep/simRosSynchronousTrigger')
-    try:
-        ret = rospy.ServiceProxy('/vrep/simRosSynchronousTrigger', simRosSynchronousTrigger)
-        return ret.call()
-    except rospy.ServiceException, e:
-        print "Service call failed: %s" % e
-        return -1
-
-
-def wait_untel_pos(target_pos):
-    """ wait until position is reached, wait for error threshold
-    @param target_pos Postion to reach
-    """
-    mini = 0.001
-    err0 = abs(target_pos[0] - joints[0])
-    err1 = abs(target_pos[1] - joints[1])
-    err2 = abs(target_pos[2] - joints[2])
-    err3 = abs(target_pos[3] - joints[3])
-    err4 = abs(target_pos[4] - joints[4])
-    while err0 > mini or err1 > mini or err2 > mini or err3 > mini or err4 > mini:
-        TriggerSimualtion()
-        err0 = abs(target_pos[0] - joints[0])
-        err1 = abs(target_pos[1] - joints[1])
-        err2 = abs(target_pos[2] - joints[2])
-        err3 = abs(target_pos[3] - joints[3])
-        err4 = abs(target_pos[4] - joints[4])
-
-
-def wait_untel_pos_eq(target_pos):
-    """ wait until position is reached, wait for stable error0
-    @param target_pos Postion to reach
-    """
-    global joints
-    TriggerSimualtion()
-    err = abs(np.array(target_pos) - np.array(joints))
-    global err_old
-    global get
-    while (err != err_old).all() or not get:
-        global err_old
-        global get
-        global joints
-        err_old = err
-        TriggerSimualtion()
-        #sleep(0.1)
-        print "trigger"
-
+init_sync()
 
 stopSimualtion()
+sleep(0.5)
+setSyncSimualtion()
+sleep(0.5)
 startSimualtion()
+sleep(0.5)
 setSyncSimualtion()
 TriggerSimualtion()
 TriggerSimualtion()
 TriggerSimualtion()
 TriggerSimualtion()
-for i in xrange(0, 2100, 1):
-    erg = test.step_to_point([-0.05 + i / 10000., 0.0, 0.04])
-    if erg is not None:
-        pub.publish(erg[0])
-        pub1.publish(erg[1])
-        pub2.publish(erg[2])
-        pub3.publish(erg[3])
-        pub4.publish(erg[4])
-        pub.publish(erg[0])
-        pub1.publish(erg[1])
-        pub2.publish(erg[2])
-        pub3.publish(erg[3])
-        pub4.publish(erg[4])
-        pub.publish(erg[0])
-        pub1.publish(erg[1])
-        pub2.publish(erg[2])
-        pub3.publish(erg[3])
-        pub4.publish(erg[4])
-        wait_untel_pos_eq(erg)
-    else:
-        stopSimualtion()
-    print "Step: ", i
+
+
+
+def toIntitialPos():
+        joint_pos = getJointPostition()
+        for i in xrange(0,100,1):
+            erg=joint_pos - (((joint_pos-test.init_point)/100))
+            print "initial Point:",test.init_point
+            print erg
+            pub.publish(erg[0])
+            pub1.publish(erg[1])
+            pub2.publish(erg[2])
+            pub3.publish(erg[3])
+            pub4.publish(erg[4])
+            pub.publish(erg[0])
+            pub1.publish(erg[1])
+            pub2.publish(erg[2])
+            pub3.publish(erg[3])
+            pub4.publish(erg[4])
+            pub.publish(erg[0])
+            pub1.publish(erg[1])
+            pub2.publish(erg[2])
+            pub3.publish(erg[3])
+            pub4.publish(erg[4])
+            wait_untel_pos_eq(erg)
+
+def linearMovement2Point(point, resolution=100):
+        angle = np.array(test.step_to_point(point))
+        if angle is not None:
+            joint_pos = getJointPostition()
+            steps=math.sqrt(sum(i*i for i in joint_pos-angle))
+            for i in xrange(0,int(resolution*steps),1):
+                erg=joint_pos - (((joint_pos-angle)/(resolution*steps)))
+                pub.publish(erg[0])
+                pub1.publish(erg[1])
+                pub2.publish(erg[2])
+                pub3.publish(erg[3])
+                pub4.publish(erg[4])
+                wait_untel_pos_eq(erg)
+
+
+linearMovement2Point([0.2,0.2,1.2])
+#toIntitialPos()
+
+#
+#
+# for i in xrange(0, 210, 1):
+#     erg = test.step_to_point([-0.05 + i / 1000., 0.0, 0.04])
+#     if erg is not None:
+#         pub.publish(erg[0])
+#         pub1.publish(erg[1])
+#         pub2.publish(erg[2])
+#         pub3.publish(erg[3])
+#         pub4.publish(erg[4])
+#         pub.publish(erg[0])
+#         pub1.publish(erg[1])
+#         pub2.publish(erg[2])
+#         pub3.publish(erg[3])
+#         pub4.publish(erg[4])
+#         pub.publish(erg[0])
+#         pub1.publish(erg[1])
+#         pub2.publish(erg[2])
+#         pub3.publish(erg[3])
+#         pub4.publish(erg[4])
+#         wait_untel_pos_eq(erg)
+#     else:
+#         stopSimualtion()
+#     print "Step: ", i
+
+stopSimualtion()
