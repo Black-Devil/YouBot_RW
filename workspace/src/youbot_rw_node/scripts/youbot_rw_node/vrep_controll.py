@@ -55,6 +55,18 @@ def setSyncSimualtion():
         print "Service call failed: %s" % e
         return -1
 
+def unsetSyncSimualtion():
+    """ set Simulation in VRep to non trigger mode
+    """
+    rospy.wait_for_service('/vrep/simRosSynchronous')
+    try:
+        ret = rospy.ServiceProxy('/vrep/simRosSynchronous', simRosSynchronous)
+        print "Set simulation into non trigger mode"
+        return ret.call(False)
+    except rospy.ServiceException, e:
+        print "Service call failed: %s" % e
+        return -1
+
 
 def TriggerSimualtion():
     """ triggers an simulation step in VRep

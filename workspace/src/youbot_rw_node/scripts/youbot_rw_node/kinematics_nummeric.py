@@ -252,11 +252,10 @@ pub4 = rospy.Publisher('/youbot_rw/vrep/arm_joint5_target', Float64, queue_size=
 init_sync()
 
 stopSimualtion()
-sleep(0.5)
-setSyncSimualtion()
+TriggerSimualtion()
 sleep(0.5)
 startSimualtion()
-sleep(0.5)
+TriggerSimualtion()
 setSyncSimualtion()
 TriggerSimualtion()
 TriggerSimualtion()
@@ -303,7 +302,8 @@ def linearMovement2Point(point, resolution=100):
                 wait_untel_pos_eq(erg)
 
 
-linearMovement2Point([0.2,0.2,1.2])
+linearMovement2Point([0.2,0.2,0.0])
+linearMovement2Point([0.2,0.0,0.0])
 #toIntitialPos()
 
 #
@@ -331,4 +331,7 @@ linearMovement2Point([0.2,0.2,1.2])
 #         stopSimualtion()
 #     print "Step: ", i
 
-stopSimualtion()
+unsetSyncSimualtion()
+TriggerSimualtion()
+#stopSimualtion()
+#TriggerSimualtion()
