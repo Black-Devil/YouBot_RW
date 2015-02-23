@@ -26,6 +26,10 @@ class Kinematics_base:
             {'theta':0.0            ,'d':0.02       ,'a':0.0        ,'alpha':0.0               })) #from tcp to pencil
 
     def direct_kin(self, thetas):
+        """ kinematic calculation
+        @param [in] thetas <b><i><c> [vector-5]: </c></i></b> joint angles
+        @return <b><i><c> [vector-3]: </c></i></b> destination position
+        """
         trans = self.get_dh_transform(self.dh[0], 0.0) * \
                 self.get_dh_transform(self.dh[1], thetas[0]) * self.get_dh_transform(self.dh[2], thetas[1]) * \
                 self.get_dh_transform(self.dh[3], thetas[2]) * self.get_dh_transform(self.dh[4], thetas[3]) * \
@@ -34,18 +38,21 @@ class Kinematics_base:
 
 
     def direct_kin_wp(self, thetas):
+        """ kinematic calculation
+        @param [in] thetas <b><i><c> [vector-5]: </c></i></b> joint angles
+        @return <b><i><c> [vector-3]: </c></i></b> destination position
+        """
         trans = self.get_dh_transform(self.dh[0], 0.0) * \
                 self.get_dh_transform(self.dh[1], thetas[0]) * self.get_dh_transform(self.dh[2], thetas[1]) * \
                 self.get_dh_transform(self.dh[3], thetas[2]) * self.get_dh_transform(self.dh[4], thetas[3])
         return np.array((trans * np.matrix((0, 0, 0, 1)).transpose()).transpose())[0][0:3]
 
-    def direct_kin_wp(self, thetas):
-        trans = self.get_dh_transform(self.dh[0], 0.0) * \
-                self.get_dh_transform(self.dh[1], thetas[0]) * self.get_dh_transform(self.dh[2], thetas[1]) * \
-                self.get_dh_transform(self.dh[3], thetas[2]) * self.get_dh_transform(self.dh[4], thetas[3])
-        return np.array((trans * np.matrix((0, 0, 0, 1)).transpose()).transpose())[0][0:3]
 
     def direct_kin_2_wristPoint(self, thetas):
+        """ kinematic calculation
+        @param [in] thetas <b><i><c> [vector-5]: </c></i></b> joint angles
+        @return <b><i><c> [vector-3]: </c></i></b> destination position
+        """
         trans=  self.get_dh_transform(self.dh[0],0.0) * \
                     self.get_dh_transform(self.dh[1],thetas[0]) * self.get_dh_transform(self.dh[2],thetas[1]) * \
                     self.get_dh_transform(self.dh[3],thetas[2])
@@ -53,6 +60,10 @@ class Kinematics_base:
 
 
     def get_dh_transform(self, dh, theta=0):
+        """ Denavit-Hartenberg-Transformation
+        @param [in] dh <b><i><c> [vector-4]: </c></i></b> dh parameter set for koordinate system
+        @return <b><i><c> [matrix-4x4]: </c></i></b> Transformation Marix
+        """
         trans = np.matrix(((cos(dh['theta'] + theta), -sin(dh['theta'] + theta) * cos(dh['alpha']),
                             sin(dh['theta'] + theta) * sin(dh['alpha']), dh['a'] * cos(dh['theta'] + theta)),
                            (sin(dh['theta'] + theta), cos(dh['theta'] + theta) * cos(dh['alpha']),
@@ -64,6 +75,10 @@ class Kinematics_base:
 
 
     def get_inv_transform(self, dh, theta=0):
+        """ inverse Denavit-Hartenberg-Transformation
+        @param [in] dh <b><i><c> [vector-4]: </c></i></b> dh parameter set for koordinate system
+        @return <b><i><c> [matrix-4x4]: </c></i></b> Transformation Marix
+        """
         trans = np.matrix((  (cos(dh['theta'] + theta), sin(dh['theta'] + theta), 0, -dh['a']),
                              (-sin(dh['theta'] + theta) * cos(dh['alpha']), cos(dh['theta'] + theta) * cos(dh['alpha']),
                               sin(dh['alpha']), -dh['d'] * sin(dh['alpha'])),
