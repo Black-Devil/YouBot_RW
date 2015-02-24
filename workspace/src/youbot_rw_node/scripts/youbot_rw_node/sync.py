@@ -29,6 +29,8 @@ def getJointPostition():
     """ get Joint States
     @retval <Array> with Joint positions in rad
     """
+    global position_geted
+    position_geted=False
     while not position_geted:
         TriggerSimualtion()
     return joints
@@ -76,5 +78,4 @@ def wait_untel_pos_eq(target_pos):
         err_old = err
         TriggerSimualtion()
         #sleep(0.1)
-        print "trigger"
     position_geted=False
