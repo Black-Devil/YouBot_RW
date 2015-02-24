@@ -37,6 +37,7 @@ class Node(object):
         self.pause = False
 
         self.lock = threading.Lock()
+        self.kinemaic_type = "numsaseric"
 
         rospy.init_node('youbot_rw_node')
 	
@@ -56,11 +57,9 @@ class Node(object):
         self.pub2vrep_joint_3_trgt = rospy.Publisher('/youbot_rw/vrep/arm_joint3_target', Float64, tcp_nodelay=True,queue_size=1)
         self.pub2vrep_joint_4_trgt = rospy.Publisher('/youbot_rw/vrep/arm_joint4_target', Float64, tcp_nodelay=True,queue_size=1)
         self.pub2vrep_joint_5_trgt = rospy.Publisher('/youbot_rw/vrep/arm_joint5_target', Float64, tcp_nodelay=True,queue_size=1)
-        
-        rospy.Subscriber('/vrep/youbot_rw/joint_states', JointState, self.callback_vrep_joint_states)
-        
-        
-        self.spin_restarter()        
+
+        sync.init_sync()
+        self.spin_restarter()
 
 
     def init_params(self):
@@ -158,6 +157,8 @@ class Node(object):
         self.pub2vrep_joint_3_trgt.publish(trgts_bogen[2])
         self.pub2vrep_joint_4_trgt.publish(trgts_bogen[3])
         self.pub2vrep_joint_5_trgt.publish(trgts_bogen[4])
+        self.pub2vrep_joint_5_trgt.publish(trgts_bogen[4])
+        sync.wait_untel_pos_eq(trgts_bogen)
         #time.sleep(0.01)
     
     
@@ -240,53 +241,56 @@ class Node(object):
 
     def process_ptp_position(self):
         print("== triggered ptp position ==")
-        #time.sleep(0.2)
-
-        tmpPos = np.matrix((self.config_trgt_pos[0],  self.config_trgt_pos[1],  self.config_trgt_pos[2])).transpose()
-        #print "input ik", tmpPos
-        valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(tmpPos, True, False, False)
-        #print("debug get valid ik solutions")
-        #time.sleep(0.2)
-
-        valid_sol = False
-        if not valid_ik_solutions:
-            # try again without fast calculation
-            valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(tmpPos, False, False, False)
-            #print("debug get valid ik solutions again")
+        if self.kinemaic_type== "Nummeric":
+            pass
+        else:
             #time.sleep(0.2)
 
+            tmpPos = np.matrix((self.config_trgt_pos[0],  self.config_trgt_pos[1],  self.config_trgt_pos[2])).transpose()
+            #print "input ik", tmpPos
+            valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(tmpPos, True, False, False)
+            #print("debug get valid ik solutions")
+            #time.sleep(0.2)
+
+            valid_sol = False
             if not valid_ik_solutions:
-                print "// no valid ik solution possible! //"
-                self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "position processing not possible, found no ik solution")
+                # try again without fast calculation
+                valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(tmpPos, False, False, False)
+                #print("debug get valid ik solutions again")
+                #time.sleep(0.2)
+
+                if not valid_ik_solutions:
+                    print "// no valid ik solution possible! //"
+                    self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "position processing not possible, found no ik solution")
+                else:
+                    valid_sol = True
             else:
                 valid_sol = True
-        else:
-            valid_sol = True
 
-        if valid_sol:
-            print "// valid ik solution possible! //"
-            #print "first valid ik solution: [%.4f; %.4f; %.4f; %.4f; %.4f;]" % (math.degrees(valid_ik_solutions[0][0]), math.degrees(valid_ik_solutions[0][1]), math.degrees(valid_ik_solutions[0][2]), math.degrees(valid_ik_solutions[0][3]), math.degrees(valid_ik_solutions[0][4]) ) , self.kinematics.isSolutionValid(valid_ik_solutions[0])
-            #dk_pos = self.kinematics.direct_kin(valid_ik_solutions[0], True)
-            #print "dk_pos: [%.4f; %.4f; %.4f]" % (dk_pos[0],dk_pos[1],dk_pos[2])
+            if valid_sol:
+                print "// valid ik solution possible! //"
+                #print "first valid ik solution: [%.4f; %.4f; %.4f; %.4f; %.4f;]" % (math.degrees(valid_ik_solutions[0][0]), math.degrees(valid_ik_solutions[0][1]), math.degrees(valid_ik_solutions[0][2]), math.degrees(valid_ik_solutions[0][3]), math.degrees(valid_ik_solutions[0][4]) ) , self.kinematics.isSolutionValid(valid_ik_solutions[0])
+                #dk_pos = self.kinematics.direct_kin(valid_ik_solutions[0], True)
+                #print "dk_pos: [%.4f; %.4f; %.4f]" % (dk_pos[0],dk_pos[1],dk_pos[2])
 
-            #print("debug solutions:"),valid_ik_solutions
+                #print("debug solutions:"),valid_ik_solutions
 
-            self.send_vrep_joint_targets(valid_ik_solutions[0], True)
-            self.config_cur_pos = self.kinematics.direct_kin(valid_ik_solutions[0])
-            self.init_pos = True
-            self.config_thetas_bogen = valid_ik_solutions[0]
+                self.send_vrep_joint_targets(valid_ik_solutions[0], True)
+                self.config_cur_pos = self.kinematics.direct_kin(valid_ik_solutions[0])
+                self.init_pos = True
+                self.config_thetas_bogen = valid_ik_solutions[0]
 
 
-            self.config_thetas[0] = math.degrees(self.config_thetas_bogen[0])
-            self.config_thetas[1] = math.degrees(self.config_thetas_bogen[1])
-            self.config_thetas[2] = math.degrees(self.config_thetas_bogen[2])
-            self.config_thetas[3] = math.degrees(self.config_thetas_bogen[3])
-            self.config_thetas[4] = math.degrees(self.config_thetas_bogen[4])
+                self.config_thetas[0] = math.degrees(self.config_thetas_bogen[0])
+                self.config_thetas[1] = math.degrees(self.config_thetas_bogen[1])
+                self.config_thetas[2] = math.degrees(self.config_thetas_bogen[2])
+                self.config_thetas[3] = math.degrees(self.config_thetas_bogen[3])
+                self.config_thetas[4] = math.degrees(self.config_thetas_bogen[4])
 
-            self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "position processing done, found solution")
-            #tmp = self.kinematics.offset2world(valid_ik_solutions[0])
-            #send tmp to GUI
-            print("== ptp position movement done==")
+                self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "position processing done, found solution")
+                #tmp = self.kinematics.offset2world(valid_ik_solutions[0])
+                #send tmp to GUI
+                print("== ptp position movement done==")
 
 
     def process_writing(self):
@@ -659,60 +663,6 @@ class Node(object):
             print("WARNING: condition changed in this step")
             return solutions[0], solutions_cond[0]
 
-
-    def callback_vrep_joint_states(self,msg):
-        if(not self.run_status):
-            return
-
-        self.lock.acquire()
-        self.vrep_msg_name = msg.name
-        self.vrep_msg_position = msg.position
-        self.vrep_msg_velocity = msg.velocity
-        self.vrep_msg_effort = msg.effort
-        self.lock.release()
-
-
-    #returns (found, position, velocity, effort) for the joint joint_name
-    #(found is 1 if found, 0 otherwise)
-    def return_joint_state(self, joint_name):
-
-         #no messages yet
-        if self.vrep_msg_name == []:
-            rospy.logerr("No robot_state messages received!\n")
-            return (0, 0., 0., 0.)
-
-        #return info for this joint
-        self.lock.acquire()
-        if joint_name in self.vrep_msg_name:
-            index = self.vrep_msg_name.index(joint_name)
-            position = self.vrep_msg_position[index]
-            velocity = self.vrep_msg_velocity[index]
-            effort = self.vrep_msg_effort[index]
-
-        #unless it's not found
-        else:
-            rospy.logerr("Joint %s not found!", (joint_name,))
-            self.lock.release()
-            return (0, 0., 0., 0.)
-        self.lock.release()
-        return (1, position, velocity, effort)
-
-
-         #server callback: returns arrays of position, velocity, and effort
-         #for a list of joints specified by name
-    #def return_joint_states(self, req):
-    #    joints_found = []
-    #    positions = []
-    #    velocities = []
-    #    efforts = []
-    #    for joint_name in req.name:
-    #        (found, position, velocity, effort) = self.return_joint_state(joint_name)
-    #        joints_found.append(found)
-    #        positions.append(position)
-    #        velocities.append(velocity)
-    #        efforts.append(effort)
-    #    #return ReturnJointStatesResponse(joints_found, positions, velocities, efforts)
-        
         
     def parse_input_from_gui(self, msg):
 
