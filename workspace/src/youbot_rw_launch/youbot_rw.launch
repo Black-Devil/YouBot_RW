@@ -2,5 +2,6 @@
     <node name="youbot_rw_gui" pkg="youbot_rw_rqt_gui" type="youbot_rw_rqt_gui" output="screen"  respawn="true">
     </node>
     <node name="youbot_rw_node" pkg="youbot_rw_node" type="youbot_rw_node.py" output="screen"  respawn="true">
+	<rosparam command="load" file="$(find youbot_rw_launch)/youbot_rw_node_params.yaml" />
     </node>
 </launch> 

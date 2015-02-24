@@ -25,6 +25,11 @@ import os
 
 class Node(object):
     def __init__(self):
+        """ init main ros node of youbot remote writing
+
+        @return <b><i><c> [void]: </c></i></b> nothing
+        """
+
         super(Node, self).__init__()
         self.run = True
         self.pause = False
@@ -57,6 +62,10 @@ class Node(object):
 
 
     def init_params(self):
+        """ init parameters for main node of youbot remote writing
+
+        @return <b><i><c> [void]: </c></i></b> nothing
+        """
         self.rate = 100
         self.disable = False
         self.status = 1 #0= error 1= no error
@@ -85,6 +94,7 @@ class Node(object):
         script_path = os.path.dirname(os.path.abspath(__file__))
         print("script dir: "), script_path
         db_path = script_path + '/../../../../../material/YouBot_RW_Material/Buchstaben_Datenbank/letter_database.xml'
+        #db_path = rospy.get_param("general/PATH_OF_LETTER_DATABASE")
         print("opening following letter_database: "), db_path
         self.letter_database = ET.parse(db_path)
         self.ldb_root = self.letter_database.getroot()
@@ -278,9 +288,10 @@ class Node(object):
         self.base_fs = 100.0
         self.centimeter2meter_factor = 0.01
         self.letter_size_factor = float(self.config_fontsize)/self.base_fs
-        self.between_letter_margin = self.letter_size_factor * 0.001  # x coordinate
-        self.between_line_margin = self.letter_size_factor * 0.003    # y coordinate
-        self.letter_size = self.letter_size_factor *0.001             # height of written letters in m
+
+        self.between_letter_margin = self.letter_size_factor * 0.01#0.001  # x coordinate
+        self.between_line_margin = self.letter_size_factor * 0.03    # y coordinate
+        self.letter_height = self.config_fontsize * 0.001             # height of written letters in m
 
         self.hoverOffset = 0.01             # z coordinate
         self.line_ending_threshold = 0.1
@@ -338,7 +349,7 @@ class Node(object):
 
                 #check for line ending
                 if(current_write_pos[1] > self.line_ending_threshold):
-                    current_write_pos[0] = current_write_pos[0] + self.letter_size + self.between_line_margin
+                    current_write_pos[0] = current_write_pos[0] + self.letter_height + self.between_line_margin
                     current_write_pos[1] = -self.line_ending_threshold
 
                 print("== letter "), letter, (" done ==")

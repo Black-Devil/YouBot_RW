@@ -1,5 +1,6 @@
-1. Datenbank				[Julian]
-2. Doku-->Doxygen			[Marcel & Julian]
-3. Präsentation				[Marcel]
-4. Youbot am bewegen hindern(VREP)	[Julian]
-5. Nur beim Aufsetzen Schreiben(VREP)	[Julian] DONE
+1. Datenbank						[TODO]	[Julian]
+2. Doku-->Doxygen					[TODO]	[Marcel & Julian]
+3. Präsentation						[TODO]	[Marcel]
+4. Youbot am bewegen hindern(VREP)			[DONE]	[Julian] ([Marcel]Workaround: Pencil_Trace is now relative to Write_Plane, as well as drawing objects)
+5. Nur beim Aufsetzen Schreiben(VREP)			[DONE]	[Julian]
+6. Delete Textinput and drawing objects on button click [TODO]	[Julian & Marcel]
