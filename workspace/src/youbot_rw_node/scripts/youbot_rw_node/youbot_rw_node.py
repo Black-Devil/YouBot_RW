@@ -158,6 +158,7 @@ class Node(object):
         self.pub2vrep_joint_3_trgt.publish(trgts_bogen[2])
         self.pub2vrep_joint_4_trgt.publish(trgts_bogen[3])
         self.pub2vrep_joint_5_trgt.publish(trgts_bogen[4])
+        #time.sleep(0.01)
     
     
      
@@ -177,7 +178,7 @@ class Node(object):
             if(self.init_pos == False):
                 print("WARNING - programm is not yet initialized complete! The robot position is unknown! Therefor a ptp movement to position [0,0,0] is processed first.")
                 tmp = self.config_trgt_pos
-                self.config_trgt_pos = np.array([0.0, 0.0, 0.0])
+                self.config_trgt_pos = np.array([0.0, 0.0, 0.1])
                 self.process_ptp_position()
                 self.config_trgt_pos = tmp
                 self.process_writing()

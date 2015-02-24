@@ -359,6 +359,8 @@ class Kinematics_geom(Kinematics_base):
         :returns: todo
         :rtype: todo
         """
+        debug = False
+
         #ik_solutions = self.inverse_kin(point, condition_angle)
         condition_angle = np.array
         if(fastCalc):
@@ -370,7 +372,11 @@ class Kinematics_geom(Kinematics_base):
 
         valid_solutions = list()
         valid_solutions_condition = list()
+        found_Solution = False
         for i in range(0,len(condition_angle)):
+            if(debug):
+                if(found_Solution):
+                    break
             #print "condition: ", condition_angle[i]
             tmpSol =  self.inverse_kin(point, condition_angle[i])
             for k in tmpSol:
@@ -382,6 +388,34 @@ class Kinematics_geom(Kinematics_base):
                         if(k[0] < (np.pi/2) and k[0] > -(np.pi/2)):
                             valid_solutions.append(k)
                             valid_solutions_condition.append(condition_angle[i])
+                            if(debug):
+                                found_Solution = True
+                                break
+
+        if(debug):
+            #refinement
+            found_refinement = False
+            tmp_cond_angle = valid_solutions_condition[0]
+            tmp_valid_solution = valid_solutions[0]
+            while(found_refinement == False):
+                cur_cond_angle = tmp_cond_angle - 0.1
+
+                tmpSol =  self.inverse_kin(point, cur_cond_angle)
+                oneSolIsValid = False
+                for k in tmpSol:
+                    if self.isSolutionValid(k) == True:
+                        if(k[0] < (np.pi/2) and k[0] > -(np.pi/2)):
+                            cur_valid_solution = k
+                            oneSolIsValid = True
+                            break
+                if(oneSolIsValid == False):
+                    found_refinement = True
+                else:
+                    tmp_cond_angle = cur_cond_angle
+                    tmp_valid_solution = cur_valid_solution
+
+            valid_solutions[0] = tmp_valid_solution
+            valid_solutions_condition[0] = tmp_cond_angle
 
         #valid_solutions = list()
         #valid_solutions_condition = list()
