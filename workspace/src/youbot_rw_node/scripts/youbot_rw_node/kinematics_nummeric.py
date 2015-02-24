@@ -253,33 +253,30 @@ init_sync()
 
 stopSimualtion()
 TriggerSimualtion()
-sleep(0.5)
+
 startSimualtion()
 TriggerSimualtion()
+TriggerSimualtion()
+startSimualtion()
+TriggerSimualtion()
+TriggerSimualtion()
+
 setSyncSimualtion()
 TriggerSimualtion()
-TriggerSimualtion()
+
+startSimualtion()
 TriggerSimualtion()
 TriggerSimualtion()
 
 
 
-def toIntitialPos():
-        joint_pos = getJointPostition()
-        for i in xrange(0,100,1):
-            erg=joint_pos - (((joint_pos-test.init_point)/100))
-            print "initial Point:",test.init_point
-            print erg
-            pub.publish(erg[0])
-            pub1.publish(erg[1])
-            pub2.publish(erg[2])
-            pub3.publish(erg[3])
-            pub4.publish(erg[4])
-            pub.publish(erg[0])
-            pub1.publish(erg[1])
-            pub2.publish(erg[2])
-            pub3.publish(erg[3])
-            pub4.publish(erg[4])
+def linearMovement2Point(point, resolution=1000):
+        lastPoint = test.last_point
+        steps=math.sqrt(sum(i*i for i in point-lastPoint))
+        print steps
+        for i in xrange(0,int(resolution*steps),1):
+            dummy = lastPoint+((point-lastPoint)/(resolution*steps))*i
+            erg=test.step_to_point(dummy)
             pub.publish(erg[0])
             pub1.publish(erg[1])
             pub2.publish(erg[2])
@@ -287,13 +284,15 @@ def toIntitialPos():
             pub4.publish(erg[4])
             wait_untel_pos_eq(erg)
 
-def linearMovement2Point(point, resolution=100):
+
+def linearAngleMovement2Point(point, resolution=100):
         angle = np.array(test.step_to_point(point))
+        test.last_point=np.array(point)
         if angle is not None:
             joint_pos = getJointPostition()
             steps=math.sqrt(sum(i*i for i in joint_pos-angle))
             for i in xrange(0,int(resolution*steps),1):
-                erg=joint_pos - (((joint_pos-angle)/(resolution*steps)))
+                erg=joint_pos + (((angle-joint_pos)/(resolution*steps))*i)
                 pub.publish(erg[0])
                 pub1.publish(erg[1])
                 pub2.publish(erg[2])
@@ -302,9 +301,12 @@ def linearMovement2Point(point, resolution=100):
                 wait_untel_pos_eq(erg)
 
 
+
+linearAngleMovement2Point([0,0,0.02])
+linearMovement2Point([0,0,0])
 linearMovement2Point([0.2,0.2,0.0])
 linearMovement2Point([0.2,0.0,0.0])
-#toIntitialPos()
+
 
 #
 #
@@ -331,7 +333,8 @@ linearMovement2Point([0.2,0.0,0.0])
 #         stopSimualtion()
 #     print "Step: ", i
 
+TriggerSimualtion()
 unsetSyncSimualtion()
 TriggerSimualtion()
-#stopSimualtion()
-#TriggerSimualtion()
+pauseSimualtion()
+TriggerSimualtion()
