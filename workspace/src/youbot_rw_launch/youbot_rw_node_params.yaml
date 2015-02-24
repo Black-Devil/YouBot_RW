@@ -1,3 +1,4 @@
 general:
-  PATH_OF_LETTER_DATABASE:    '/home/ottocar/YouBot_RW/material/YouBot_RW_Material/Buchstaben_Datenbank/letter_database.xml'
+  USE_ROSPARAM_PATH_FOR_DATABASE:  false
+  PATH_OF_LETTER_DATABASE:         '/home/ottocar/YouBot_RW/material/YouBot_RW_Material/Buchstaben_Datenbank/letter_database.xml'
   

@@ -22,6 +22,8 @@ from youbot_rw_rqt_gui.msg import *
 
 import os
 
+import sync
+
 
 class Node(object):
     def __init__(self):
@@ -93,8 +95,12 @@ class Node(object):
         # parse xml letter database
         script_path = os.path.dirname(os.path.abspath(__file__))
         print("script dir: "), script_path
-        db_path = script_path + '/../../../../../material/YouBot_RW_Material/Buchstaben_Datenbank/letter_database.xml'
-        #db_path = rospy.get_param("general/PATH_OF_LETTER_DATABASE")
+        tmp_use_rosparam_path = rospy.get_param("/youbot_rw_node/general/USE_ROSPARAM_PATH_FOR_DATABASE")
+        if(tmp_use_rosparam_path):
+            db_path = rospy.get_param("/youbot_rw_node/general/PATH_OF_LETTER_DATABASE")
+        else:
+            db_path = script_path + '/../../../../../material/YouBot_RW_Material/Buchstaben_Datenbank/letter_database.xml'
+
         print("opening following letter_database: "), db_path
         self.letter_database = ET.parse(db_path)
         self.ldb_root = self.letter_database.getroot()
@@ -356,6 +362,21 @@ class Node(object):
 
         print("== writing done ==")
 
+
+    def calc_current_tcp_position(self):
+        joint_thetas = sync.getJointPostition()
+        self.config_thetas_bogen = np.array([joint_thetas[0],
+            joint_thetas[1],
+            joint_thetas[2],
+            joint_thetas[3],
+            joint_thetas[4]])
+        self.config_thetas[0] = math.degrees(self.config_thetas_bogen[0])
+        self.config_thetas[1] = math.degrees(self.config_thetas_bogen[1])
+        self.config_thetas[2] = math.degrees(self.config_thetas_bogen[2])
+        self.config_thetas[3] = math.degrees(self.config_thetas_bogen[3])
+        self.config_thetas[4] = math.degrees(self.config_thetas_bogen[4])
+
+        self.config_cur_pos = self.kinematics.direct_kin(self.config_thetas_bogen)
 
     def get_pointlist4letter(self, letter):
         print("get pointlist for letter: "), letter
