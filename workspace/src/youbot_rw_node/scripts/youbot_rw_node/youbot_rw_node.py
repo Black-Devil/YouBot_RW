@@ -12,6 +12,7 @@ from sensor_msgs.msg import *
 import numpy as np
 
 import kinematics_geom as kin
+import kinematics_nummeric
 
 from lxml import etree
 
@@ -23,6 +24,8 @@ from youbot_rw_rqt_gui.msg import *
 import os
 
 import sync
+import vrep_controll
+
 
 
 class Node(object):
@@ -37,7 +40,7 @@ class Node(object):
         self.pause = False
 
         self.lock = threading.Lock()
-        self.kinemaic_type = "numsaseric"
+        self.kinemaic_type = "Nummeric"
 
         rospy.init_node('youbot_rw_node')
 	
@@ -59,6 +62,17 @@ class Node(object):
         self.pub2vrep_joint_5_trgt = rospy.Publisher('/youbot_rw/vrep/arm_joint5_target', Float64, tcp_nodelay=True,queue_size=1)
 
         sync.init_sync()
+        vrep_controll.TriggerSimualtion()
+        vrep_controll.unsetSyncSimualtion()
+        vrep_controll.TriggerSimualtion()
+        vrep_controll.stopSimualtion()
+        vrep_controll.TriggerSimualtion()
+        vrep_controll.startSimualtion()
+        vrep_controll.TriggerSimualtion()
+        vrep_controll.startSimualtion()
+        vrep_controll.TriggerSimualtion()
+        vrep_controll.setSyncSimualtion()
+        vrep_controll.TriggerSimualtion()
         self.spin_restarter()
 
 
@@ -67,12 +81,15 @@ class Node(object):
 
         @return <b><i><c> [void]: </c></i></b> nothing
         """
+
+        self.hoverOffset = 0.02             # z coordinate
         self.rate = 100
         self.disable = False
         self.status = 1 #0= error 1= no error
         self.status_string = "no error"
         self.status_vrep = 0 #0=doing nothing 1= in progress 2= movement done
         self.kinematics = kin.Kinematics_geom()
+        self.kin_num = kinematics_nummeric.Kinematics_num()
         self.config_thetas = np.array([0.0,
             0.0,
             0.0,
@@ -179,7 +196,7 @@ class Node(object):
             if(self.init_pos == False):
                 print("WARNING - programm is not yet initialized complete! The robot position is unknown! Therefor a ptp movement to position [0,0,0] is processed first.")
                 tmp = self.config_trgt_pos
-                self.config_trgt_pos = np.array([0.0, 0.0, 0.1])
+                self.config_trgt_pos = np.array([0.0, 0.0, 0.2])
                 self.process_ptp_position()
                 self.config_trgt_pos = tmp
                 self.process_writing()
@@ -241,9 +258,26 @@ class Node(object):
 
     def process_ptp_position(self):
         print("== triggered ptp position ==")
+        valid_sol = False
         if self.kinemaic_type== "Nummeric":
-            pass
+            print("== using  nummeric kinematics ==")
+            resolution=100
+            point = [0, 0, 0.1]
+            erg = [0, 0, 0, 0, 0]
+            angle = np.array(self.kin_num.step_to_point(point))
+            self.kin_num.last_point=np.array(point)
+            if angle is not None:
+                joint_pos = sync.getJointPostition()
+                for i in xrange(0,int(resolution),1):
+                    erg=joint_pos + (((angle-joint_pos)/(resolution))*i)
+                    self.send_vrep_joint_targets(erg, True)
+
+            self.config_cur_pos = self.kinematics.direct_kin(erg)
+            self.init_pos = True
+            self.config_thetas_bogen = erg
+
         else:
+            print("== using  geometric kinematics ==")
             #time.sleep(0.2)
 
             tmpPos = np.matrix((self.config_trgt_pos[0],  self.config_trgt_pos[1],  self.config_trgt_pos[2])).transpose()
@@ -252,7 +286,6 @@ class Node(object):
             #print("debug get valid ik solutions")
             #time.sleep(0.2)
 
-            valid_sol = False
             if not valid_ik_solutions:
                 # try again without fast calculation
                 valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(tmpPos, False, False, False)
@@ -268,7 +301,7 @@ class Node(object):
                 valid_sol = True
 
             if valid_sol:
-                print "// valid ik solution possible! //"
+                #print "// valid ik solution possible! //"
                 #print "first valid ik solution: [%.4f; %.4f; %.4f; %.4f; %.4f;]" % (math.degrees(valid_ik_solutions[0][0]), math.degrees(valid_ik_solutions[0][1]), math.degrees(valid_ik_solutions[0][2]), math.degrees(valid_ik_solutions[0][3]), math.degrees(valid_ik_solutions[0][4]) ) , self.kinematics.isSolutionValid(valid_ik_solutions[0])
                 #dk_pos = self.kinematics.direct_kin(valid_ik_solutions[0], True)
                 #print "dk_pos: [%.4f; %.4f; %.4f]" % (dk_pos[0],dk_pos[1],dk_pos[2])
@@ -281,16 +314,15 @@ class Node(object):
                 self.config_thetas_bogen = valid_ik_solutions[0]
 
 
-                self.config_thetas[0] = math.degrees(self.config_thetas_bogen[0])
-                self.config_thetas[1] = math.degrees(self.config_thetas_bogen[1])
-                self.config_thetas[2] = math.degrees(self.config_thetas_bogen[2])
-                self.config_thetas[3] = math.degrees(self.config_thetas_bogen[3])
-                self.config_thetas[4] = math.degrees(self.config_thetas_bogen[4])
+        self.config_thetas[0] = math.degrees(self.config_thetas_bogen[0])
+        self.config_thetas[1] = math.degrees(self.config_thetas_bogen[1])
+        self.config_thetas[2] = math.degrees(self.config_thetas_bogen[2])
+        self.config_thetas[3] = math.degrees(self.config_thetas_bogen[3])
+        self.config_thetas[4] = math.degrees(self.config_thetas_bogen[4])
 
-                self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "position processing done, found solution")
-                #tmp = self.kinematics.offset2world(valid_ik_solutions[0])
-                #send tmp to GUI
-                print("== ptp position movement done==")
+        self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "position processing done, found solution")
+        if valid_sol:
+            print("== ptp position movement done==")
 
 
     def process_writing(self):
@@ -304,7 +336,6 @@ class Node(object):
         self.between_line_margin = self.letter_size_factor * 0.03    # y coordinate
         self.letter_height = self.config_fontsize * 0.001             # height of written letters in m
 
-        self.hoverOffset = 0.01             # z coordinate
         self.line_ending_threshold = 0.1
         self.start_line_offset = -0.00
 
@@ -427,108 +458,134 @@ class Node(object):
         :returns: todo
         :rtype: todo
         """
-        # calc step size
-        step_size = 0.002
-        #max_step = int(1.0/step_size)
 
-        # init on current angles
-        last_angles = self.config_thetas_bogen
-        last_condition = -1
+        if self.kinemaic_type=="Nummeric":
+            print("== using  nummeric kinematics ==")
+            resolution=1000
+            erg=[0, 0, 0, 0, 0]
+            for point in point_list:
+                lastPoint = self.kin_num.last_point
+                steps=math.sqrt(sum(i*i for i in point-lastPoint))
+                for i in xrange(0,int(resolution*steps),1):
+                    dummy = lastPoint+((point-lastPoint)/(resolution*steps))*i
+                    erg=self.kin_num.step_to_point(dummy)
+                    self.send_vrep_joint_targets(erg, True)
+                self.config_cur_pos = np.array([ point[0], point[1], point[2] ])
+                self.init_pos = True
+                self.config_thetas_bogen = erg
 
-        # process pointlist
-        for i in point_list:
-            origin = self.config_cur_pos
-            print("lin_move from: "), origin, (" to: "), i
+                last_angles = erg
 
-            move_vec = np.array([ i[0] - origin[0], i[1] - origin[1], i[2] - origin[2] ])
-            move_length = np.sqrt(move_vec[0]**2 + move_vec[1]**2 + move_vec[2]**2)
+                self.config_thetas[0] = math.degrees(self.config_thetas_bogen[0])
+                self.config_thetas[1] = math.degrees(self.config_thetas_bogen[1])
+                self.config_thetas[2] = math.degrees(self.config_thetas_bogen[2])
+                self.config_thetas[3] = math.degrees(self.config_thetas_bogen[3])
+                self.config_thetas[4] = math.degrees(self.config_thetas_bogen[4])
 
-            step_count_int = int(move_length/step_size) + 1
-            step_count_float = move_length/step_size
-            step_vec = np.array([ move_vec[0] / step_count_float, move_vec[1] / step_count_float, move_vec[2] / step_count_float ])
-            #print("current point: "), i
-            #print("stepcount: "), step_count_int
+        else:
+            print("== using geometric kinematics ==")
+            # calc step size
+            step_size = 0.002
+            #max_step = int(1.0/step_size)
 
-            # process single point out of pointlist
-            for k in range(1,step_count_int+1):
+            # init on current angles
+            last_angles = self.config_thetas_bogen
+            last_condition = -1
 
-                current_valid = False
-                #print k
-                if(k == step_count_int):
-                    #print("debug k = "),int(1.0/step_size)+1
-                    current_trgt = np.array([ i[0], i[1], i[2]])
-                else:
-                    current_trgt = np.array([ origin[0] + k*step_vec[0], origin[1] + k*step_vec[1], origin[2] + k*step_vec[2]])
+            # process pointlist
+            for i in point_list:
+                origin = self.config_cur_pos
+                print("lin_move from: "), origin, (" to: "), i
 
-                # calc inverse kinematik for current point
-                valid_ik_solutions, valid_ik_solutions_condition = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, True, limit_solution, True)
-                if not valid_ik_solutions:
-                    #try again without fast calculation
-                    valid_ik_solutions, valid_ik_solutions_condition = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, False, limit_solution, True)
+                move_vec = np.array([ i[0] - origin[0], i[1] - origin[1], i[2] - origin[2] ])
+                move_length = np.sqrt(move_vec[0]**2 + move_vec[1]**2 + move_vec[2]**2)
+
+                step_count_int = int(move_length/step_size) + 1
+                step_count_float = move_length/step_size
+                step_vec = np.array([ move_vec[0] / step_count_float, move_vec[1] / step_count_float, move_vec[2] / step_count_float ])
+                #print("current point: "), i
+                #print("stepcount: "), step_count_int
+
+                # process single point out of pointlist
+                for k in range(1,step_count_int+1):
+
+                    current_valid = False
+                    #print k
+                    if(k == step_count_int):
+                        #print("debug k = "),int(1.0/step_size)+1
+                        current_trgt = np.array([ i[0], i[1], i[2]])
+                    else:
+                        current_trgt = np.array([ origin[0] + k*step_vec[0], origin[1] + k*step_vec[1], origin[2] + k*step_vec[2]])
+
+                    # calc inverse kinematik for current point
+                    valid_ik_solutions, valid_ik_solutions_condition = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, True, limit_solution, True)
                     if not valid_ik_solutions:
-                        print("Found no ik solution for point(%.4f; %.4f; %.4f). Processing goes on with next point.") %(current_trgt[0], current_trgt[1], current_trgt[2])
+                        #try again without fast calculation
+                        valid_ik_solutions, valid_ik_solutions_condition = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, False, limit_solution, True)
+                        if not valid_ik_solutions:
+                            print("Found no ik solution for point(%.4f; %.4f; %.4f). Processing goes on with next point.") %(current_trgt[0], current_trgt[1], current_trgt[2])
+                        else:
+                            current_valid = True
                     else:
                         current_valid = True
-                else:
-                    current_valid = True
 
-                if current_valid:
+                    if current_valid:
 
-                    # TODO: check for singularities in angles
-                    # search solutions without singularities
-                    if(check_singularities):
-                        valid_sol_nosing = list()
-                        valid_sol_nosing_cond = list()
-                        int_counter = -1
-                        for s in valid_ik_solutions:
-                            int_counter = int_counter + 1
-                            has_sing = False
-                            if(last_condition != -1):
-                                if( (s[0] > 0.0 and last_angles[0] < 0.0) or (s[0] < 0.0 and last_angles[0] > 0.0)): has_sing = True
-                                if( (s[1] > 0.0 and last_angles[1] < 0.0) or (s[1] < 0.0 and last_angles[1] > 0.0)): has_sing = True
-                                if( (s[2] > 0.0 and last_angles[2] < 0.0) or (s[2] < 0.0 and last_angles[2] > 0.0)): has_sing = True
-                                if( (s[3] > 0.0 and last_angles[3] < 0.0) or (s[3] < 0.0 and last_angles[3] > 0.0)): has_sing = True
+                        # TODO: check for singularities in angles
+                        # search solutions without singularities
+                        if(check_singularities):
+                            valid_sol_nosing = list()
+                            valid_sol_nosing_cond = list()
+                            int_counter = -1
+                            for s in valid_ik_solutions:
+                                int_counter = int_counter + 1
+                                has_sing = False
+                                if(last_condition != -1):
+                                    if( (s[0] > 0.0 and last_angles[0] < 0.0) or (s[0] < 0.0 and last_angles[0] > 0.0)): has_sing = True
+                                    if( (s[1] > 0.0 and last_angles[1] < 0.0) or (s[1] < 0.0 and last_angles[1] > 0.0)): has_sing = True
+                                    if( (s[2] > 0.0 and last_angles[2] < 0.0) or (s[2] < 0.0 and last_angles[2] > 0.0)): has_sing = True
+                                    if( (s[3] > 0.0 and last_angles[3] < 0.0) or (s[3] < 0.0 and last_angles[3] > 0.0)): has_sing = True
 
-                            if not has_sing:
-                                valid_sol_nosing.append(s)
-                                valid_sol_nosing_cond.append(valid_ik_solutions_condition[int_counter])
+                                if not has_sing:
+                                    valid_sol_nosing.append(s)
+                                    valid_sol_nosing_cond.append(valid_ik_solutions_condition[int_counter])
 
-                        # if singularity is not preventable, hover and go to new condition
-                        if not valid_sol_nosing:
-                            print("!!! SINGULARITY happened !!!")
-                            best_sol = valid_ik_solutions[0]
-                            last_condition = valid_ik_solutions_condition[0]
+                            # if singularity is not preventable, hover and go to new condition
+                            if not valid_sol_nosing:
+                                print("!!! SINGULARITY happened !!!")
+                                best_sol = valid_ik_solutions[0]
+                                last_condition = valid_ik_solutions_condition[0]
+                            else:
+                                best_sol, last_condition = self.get_best_sol_through_condition(last_condition, valid_sol_nosing, valid_sol_nosing_cond)
+                                #print("cur_condition:"), last_condition
+                                # TODO: if condition changes, handle this
+
                         else:
-                            best_sol, last_condition = self.get_best_sol_through_condition(last_condition, valid_sol_nosing, valid_sol_nosing_cond)
-                            #print("cur_condition:"), last_condition
-                            # TODO: if condition changes, handle this
+                            best_sol = valid_ik_solutions[0]
 
-                    else:
-                        best_sol = valid_ik_solutions[0]
-                    
-                    # do the movement
-                    self.send_vrep_joint_targets(best_sol, True)
-                    self.config_cur_pos = np.array([ i[0], i[1], i[2] ])
-                    self.init_pos = True
-                    self.config_thetas_bogen = best_sol
+                        # do the movement
+                        self.send_vrep_joint_targets(best_sol, True)
+                        self.config_cur_pos = np.array([ i[0], i[1], i[2] ])
+                        self.init_pos = True
+                        self.config_thetas_bogen = best_sol
 
-                    last_angles = best_sol
+                        last_angles = best_sol
 
-                    self.config_thetas[0] = math.degrees(self.config_thetas_bogen[0])
-                    self.config_thetas[1] = math.degrees(self.config_thetas_bogen[1])
-                    self.config_thetas[2] = math.degrees(self.config_thetas_bogen[2])
-                    self.config_thetas[3] = math.degrees(self.config_thetas_bogen[3])
-                    self.config_thetas[4] = math.degrees(self.config_thetas_bogen[4])
-                    # TODO: sending status to gui here produces sometimes memory errors (WTF!)
-                    #self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "linear movement in progress...")
-                    # sleep a moment to prevent unsynchronization
-                    #tmp_wait = 0.1
-                    #print("wait")
-                    #time.sleep(tmp_wait)     # sleep 0.1 sec
-                    #print("waited for "), tmp_wait, ("sec")
+                        self.config_thetas[0] = math.degrees(self.config_thetas_bogen[0])
+                        self.config_thetas[1] = math.degrees(self.config_thetas_bogen[1])
+                        self.config_thetas[2] = math.degrees(self.config_thetas_bogen[2])
+                        self.config_thetas[3] = math.degrees(self.config_thetas_bogen[3])
+                        self.config_thetas[4] = math.degrees(self.config_thetas_bogen[4])
+                        # TODO: sending status to gui here produces sometimes memory errors (WTF!)
+                        #self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "linear movement in progress...")
+                        # sleep a moment to prevent unsynchronization
+                        #tmp_wait = 0.1
+                        #print("wait")
+                        #time.sleep(tmp_wait)     # sleep 0.1 sec
+                        #print("waited for "), tmp_wait, ("sec")
 
-            #self.config_current_pos = np.array([ i[0], i[1], i[2] ])
-            self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "linear movement in progress...")
+                #self.config_current_pos = np.array([ i[0], i[1], i[2] ])
+                self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "linear movement in progress...")
 
 
 

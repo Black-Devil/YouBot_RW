@@ -236,40 +236,6 @@ class Kinematics_num(Kinematics_base):
         return True
 
 
-
-test = Kinematics_num()
-
-rospy.init_node('kinPublisher', anonymous=True)
-
-pub = rospy.Publisher('/youbot_rw/vrep/arm_joint1_target', Float64, queue_size=10)
-pub1 = rospy.Publisher('/youbot_rw/vrep/arm_joint2_target', Float64, queue_size=10)
-pub2 = rospy.Publisher('/youbot_rw/vrep/arm_joint3_target', Float64, queue_size=10)
-pub3 = rospy.Publisher('/youbot_rw/vrep/arm_joint4_target', Float64, queue_size=10)
-pub4 = rospy.Publisher('/youbot_rw/vrep/arm_joint5_target', Float64, queue_size=10)
-
-# erg = test.step_to_point([0,0,0])
-
-init_sync()
-
-stopSimualtion()
-TriggerSimualtion()
-
-startSimualtion()
-TriggerSimualtion()
-TriggerSimualtion()
-startSimualtion()
-TriggerSimualtion()
-TriggerSimualtion()
-
-setSyncSimualtion()
-TriggerSimualtion()
-
-startSimualtion()
-TriggerSimualtion()
-TriggerSimualtion()
-
-
-
 def linearMovement2Point(point, resolution=1000):
         lastPoint = test.last_point
         steps=math.sqrt(sum(i*i for i in point-lastPoint))
@@ -299,42 +265,3 @@ def linearAngleMovement2Point(point, resolution=100):
                 pub3.publish(erg[3])
                 pub4.publish(erg[4])
                 wait_untel_pos_eq(erg)
-
-
-
-linearAngleMovement2Point([0,0,0.02])
-linearMovement2Point([0,0,0])
-linearMovement2Point([0.2,0.2,0.0])
-linearMovement2Point([0.2,0.0,0.0])
-
-
-#
-#
-# for i in xrange(0, 210, 1):
-#     erg = test.step_to_point([-0.05 + i / 1000., 0.0, 0.04])
-#     if erg is not None:
-#         pub.publish(erg[0])
-#         pub1.publish(erg[1])
-#         pub2.publish(erg[2])
-#         pub3.publish(erg[3])
-#         pub4.publish(erg[4])
-#         pub.publish(erg[0])
-#         pub1.publish(erg[1])
-#         pub2.publish(erg[2])
-#         pub3.publish(erg[3])
-#         pub4.publish(erg[4])
-#         pub.publish(erg[0])
-#         pub1.publish(erg[1])
-#         pub2.publish(erg[2])
-#         pub3.publish(erg[3])
-#         pub4.publish(erg[4])
-#         wait_untel_pos_eq(erg)
-#     else:
-#         stopSimualtion()
-#     print "Step: ", i
-
-TriggerSimualtion()
-unsetSyncSimualtion()
-TriggerSimualtion()
-pauseSimualtion()
-TriggerSimualtion()
