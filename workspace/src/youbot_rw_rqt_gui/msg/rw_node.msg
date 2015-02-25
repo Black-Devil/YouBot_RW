@@ -1,6 +1,7 @@
 float64 	Fontsize
 float64 	PencilLength
 int32       processmode
+int32       kinematic
 float64 	Theta_1
 float64 	Theta_2
 float64 	Theta_3

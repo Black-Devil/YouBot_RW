@@ -154,8 +154,12 @@ class Kinematics_geom(Kinematics_base):
         acos_content = np.array(( ( (self.dh[3]['a']**2-d_wp_1[0]**2-self.dh[2]['a']**2) / (-2*d_wp_1[0]*self.dh[2]['a']) ),
                                   ( (self.dh[3]['a']**2-d_wp_1[1]**2-self.dh[2]['a']**2) / (-2*d_wp_1[1]*self.dh[2]['a']) ) ))
 
-        r=np.array([ arccos( acos_content[0] ),
-                     arccos( acos_content[1] ) ])              # array of 2 angles
+        r = np.array([float('nan'),float('nan')])
+        if acos_content[0] < 1 and acos_content[0] > -1:
+            r[0]= arccos( acos_content[0] )
+        if acos_content[1] < 1 and acos_content[1] > -1:
+            r[1]= arccos( acos_content[1] )
+
         #print "r: [%.4f; %.4f]" % (math.degrees(r[0]), math.degrees(r[1]))
 
         theta_1_0 = np.empty([2])                                                                                   #array of 2 angles

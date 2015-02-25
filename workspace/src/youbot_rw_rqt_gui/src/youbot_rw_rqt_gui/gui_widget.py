@@ -42,6 +42,7 @@ from python_qt_binding.QtGui import *#QFileDialog, QIcon, QWidget
 
 from youbot_rw_rqt_gui.msg import *
 from std_msgs.msg import *
+import vrep_controll
 
 import status_intf as status
 
@@ -73,6 +74,10 @@ class YouBotGuiWidget(QWidget):
         self.processMode_comboBox.addItem("LIN Position")
         self.processMode_comboBox.addItem("LIN Angles")
 
+
+        self.kinematic_comboBox.addItem("geometric")
+        self.kinematic_comboBox.addItem("nummeric")
+
         self.processMode = status.PROCESSING_MODE_WRITING
 
         #self.my_node = rospy.init_node('youbot_rw_gui_node')
@@ -84,6 +89,7 @@ class YouBotGuiWidget(QWidget):
 
         
         self.write_button.clicked[bool].connect(self._handle_write_clicked)
+        self.resetButton.clicked[bool].connect(self._handle_reset_clicked)
         self.set_status_text.connect(self._set_status_text)
        
         self.closeEvent = self.handle_close
@@ -123,11 +129,28 @@ class YouBotGuiWidget(QWidget):
     def handle_close(self, event):
         #self.shutdown_all()
 
-        event.accept()   
+        event.accept()
+
+    def _handle_reset_clicked(self):
+        vrep_controll.TriggerSimualtion()
+        vrep_controll.stopSimualtion()
+        vrep_controll.TriggerSimualtion()
+        vrep_controll.startSimualtion()
+        vrep_controll.TriggerSimualtion()
+        vrep_controll.TriggerSimualtion()
+        vrep_controll.startSimualtion()
+        vrep_controll.TriggerSimualtion()
+        vrep_controll.TriggerSimualtion()
+        vrep_controll.startSimualtion()
+        vrep_controll.TriggerSimualtion()
 
 
     def _handle_write_clicked(self):
         msg=rw_node()
+        if(self.kinematic_comboBox.currentIndex() == 0):
+            msg.kinematic = 0
+        else:
+            msg.kinematic = 1
         msg.Theta_1=self.theta_1_doubleSpinBox.value()
         msg.Theta_2=self.theta_2_doubleSpinBox.value()
         msg.Theta_3=self.theta_3_doubleSpinBox.value()
