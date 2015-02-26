@@ -39,6 +39,15 @@
 			<point x="10.0" y="0.0" z="0.0" hov2nxt="0"/> 
 			<point x="10.0" y="5.0" z="0.0" hov2nxt="0"/> 
 	</L>
+	<E> 		<point x="0.0" y="5.0" z="0.0" hov2nxt="0"/>
+                        <point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
+			<point x="10.0" y="0.0" z="0.0" hov2nxt="0"/> 
+			<point x="10.0" y="5.0" z="0.0" hov2nxt="1"/> 
+                        <point x="5.0" y="0.0" z="0.0" hov2nxt="0"/>
+                        <point x="5.0" y="5.0" z="0.0" hov2nxt="1"/>
+                        <point x="0.0" y="5.0" z="0.0" hov2nxt="0"/> 
+ 
+	</E>
 	<V> 		<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
 			<point x="10.0" y="2.5" z="0.0" hov2nxt="0"/> 
 			<point x="0.0" y="5.0" z="0.0" hov2nxt="0"/> 

@@ -47,7 +47,7 @@ def wait_untel_pos(target_pos):
     """ wait until position is reached, wait for error threshold
     @param target_pos Postion to reach
     """
-    mini = 0.001
+    mini = 0.003
     err0 = abs(target_pos[0] - joints[0])
     err1 = abs(target_pos[1] - joints[1])
     err2 = abs(target_pos[2] - joints[2])

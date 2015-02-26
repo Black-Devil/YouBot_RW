@@ -71,6 +71,19 @@ class Node(object):
         vrep_controll.TriggerSimualtion()
         vrep_controll.setSyncSimualtion()
         vrep_controll.TriggerSimualtion()
+        vrep_controll.TriggerSimualtion()
+        vrep_controll.TriggerSimualtion()
+        vrep_controll.TriggerSimualtion()
+        vrep_controll.TriggerSimualtion()
+        vrep_controll.TriggerSimualtion()
+        vrep_controll.TriggerSimualtion()
+        vrep_controll.TriggerSimualtion()
+        vrep_controll.TriggerSimualtion()
+        vrep_controll.TriggerSimualtion()
+        vrep_controll.TriggerSimualtion()
+        vrep_controll.TriggerSimualtion()
+
+
 
         self.config_thetas_bogen=np.array(sync.getJointPostition())
 
@@ -173,7 +186,7 @@ class Node(object):
         self.pub2vrep_joint_4_trgt.publish(trgts_bogen[3])
         self.pub2vrep_joint_5_trgt.publish(trgts_bogen[4])
         self.pub2vrep_joint_5_trgt.publish(trgts_bogen[4])
-        sync.wait_untel_pos_eq(trgts_bogen)
+        sync.wait_untel_pos(trgts_bogen)
         #time.sleep(0.01)
     
     
@@ -380,21 +393,6 @@ class Node(object):
         print("== writing done ==")
 
 
-    def calc_current_tcp_position(self):
-        joint_thetas = sync.getJointPostition()
-        self.config_thetas_bogen = np.array([joint_thetas[0],
-            joint_thetas[1],
-            joint_thetas[2],
-            joint_thetas[3],
-            joint_thetas[4]])
-        self.config_thetas[0] = math.degrees(self.config_thetas_bogen[0])
-        self.config_thetas[1] = math.degrees(self.config_thetas_bogen[1])
-        self.config_thetas[2] = math.degrees(self.config_thetas_bogen[2])
-        self.config_thetas[3] = math.degrees(self.config_thetas_bogen[3])
-        self.config_thetas[4] = math.degrees(self.config_thetas_bogen[4])
-
-        self.config_cur_pos = self.kinematics.direct_kin(self.config_thetas_bogen)
-
     def get_pointlist4letter(self, letter):
         print("get pointlist for letter: "), letter
 
@@ -440,18 +438,21 @@ class Node(object):
         :rtype: todo
         """
 
+        self.config_cur_pos = self.kinematics.direct_kin(self.config_thetas_bogen)
+
         if self.kinematic_type=="Nummeric":
             print("== using  nummeric kinematics ==")
             resolution=1000
             erg=[0, 0, 0, 0, 0]
             for point in point_list:
-                lastPoint = self.kin_num.last_point
+                lastPoint = self.config_cur_pos
+                print("lin_move from: "), np.round(lastPoint,3), (" to: "), point
                 steps=math.sqrt(sum(i*i for i in point-lastPoint))
                 for i in xrange(0,int(resolution*steps),1):
                     dummy = lastPoint+((point-lastPoint)/(resolution*steps))*i
                     erg=self.kin_num.step_to_point(dummy)
                     self.send_vrep_joint_targets(erg, True)
-                self.config_cur_pos = np.array([ point[0], point[1], point[2]])
+                self.config_cur_pos = np.array(point)
                 self.config_thetas_bogen = erg
 
                 last_angles = erg
@@ -475,7 +476,7 @@ class Node(object):
             # process pointlist
             for i in point_list:
                 origin = self.config_cur_pos
-                print("lin_move from: "), origin, (" to: "), i
+                print("lin_move from: "), np.round(origin,3), (" to: "), i
 
                 move_vec = np.array([ i[0] - origin[0], i[1] - origin[1], i[2] - origin[2] ])
                 move_length = np.sqrt(move_vec[0]**2 + move_vec[1]**2 + move_vec[2]**2)

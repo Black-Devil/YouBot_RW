@@ -22,7 +22,6 @@ from kinematics_base import Kinematics_base
 class Kinematics_num(Kinematics_base):
     destination_point = np.array([0, 0, 0])
     last_solution = np.array([-4.5284128798882501e-09, 0.84351333295648456, 1.2692013125752315, 0.014612536532375684, 0])
-    last_point = np.array([0, 0, 0])
     init_point = np.array([-4.5284128798882501e-09, 0.84351333295648456, 1.2692013125752315, 0.014612536532375684, 0])
 
 
@@ -153,7 +152,6 @@ class Kinematics_num(Kinematics_base):
         #    print "Point is not reachable"
         #    return None
 
-        self.last_point = self.destination_point
         self.destination_point = point
         if self.last_solution is None:
             self.last_solution = self.find_best_solution(self.search_all_solutions(point, 6))
@@ -234,34 +232,3 @@ class Kinematics_num(Kinematics_base):
             return False
 
         return True
-
-
-def linearMovement2Point(point, resolution=1000):
-        lastPoint = test.last_point
-        steps=math.sqrt(sum(i*i for i in point-lastPoint))
-        print steps
-        for i in xrange(0,int(resolution*steps),1):
-            dummy = lastPoint+((point-lastPoint)/(resolution*steps))*i
-            erg=test.step_to_point(dummy)
-            pub.publish(erg[0])
-            pub1.publish(erg[1])
-            pub2.publish(erg[2])
-            pub3.publish(erg[3])
-            pub4.publish(erg[4])
-            wait_untel_pos_eq(erg)
-
-
-def linearAngleMovement2Point(point, resolution=100):
-        angle = np.array(test.step_to_point(point))
-        test.last_point=np.array(point)
-        if angle is not None:
-            joint_pos = getJointPostition()
-            steps=math.sqrt(sum(i*i for i in joint_pos-angle))
-            for i in xrange(0,int(resolution*steps),1):
-                erg=joint_pos + (((angle-joint_pos)/(resolution*steps))*i)
-                pub.publish(erg[0])
-                pub1.publish(erg[1])
-                pub2.publish(erg[2])
-                pub3.publish(erg[3])
-                pub4.publish(erg[4])
-                wait_untel_pos_eq(erg)
