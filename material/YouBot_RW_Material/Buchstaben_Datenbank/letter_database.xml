@@ -2,11 +2,14 @@
 <!-- database is in fontsize 100, which means letters are of height 100mm; width of letters is variable; database is in centimeter units -->
 <letter_database>
 	<A> 		<point x="10.0" y="0.0" z="0.0" hov2nxt="0"/>
+                        <circle r="1.0" x="0.0" y="0.0" from="90.0" to="180.0" hov2nxt="0"/>
 			<point x="0.0" y="2.5" z="0.0" hov2nxt="0"/> 
 			<point x="10.0" y="5.0" z="0.0" hov2nxt="1"/> 
 			<point x="6.0" y="0.5" z="0.0" hov2nxt="0"/> 
-			<point x="6.0" y="4.5" z="0.0" hov2nxt="0"/>
+			<point x="6.0" y="4.5" z="0.0" hov2nxt="1"/>
 	</A>
+        <Q>             <circle r="10.0" x="0.0" y="0.0" from="90.0" to="180.0" hov2nxt="1"/>                     
+	</Q>
 	<B> 		<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
 			<point x="0.0" y="2.5" z="0.0" hov2nxt="0"/> 
 			<point x="1.6" y="4.8" z="0.0" hov2nxt="0"/> 
@@ -18,14 +21,14 @@
 			<point x="8.34" y="5.0" z="0.0" hov2nxt="0"/> 
 			<point x="10.0" y="2.5" z="0.0" hov2nxt="0"/> 
 			<point x="10.0" y="0.0" z="0.0" hov2nxt="0"/> 
-			<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
+			<point x="0.0" y="0.0" z="0.0" hov2nxt="1"/> 
 	</B>
 	<C> 		<point x="0.0" y="5.0" z="0.0" hov2nxt="0"/> 
 			<point x="0.0" y="2.5" z="0.0" hov2nxt="0"/> 
 			<point x="3.3" y="0.0" z="0.0" hov2nxt="0"/> 
 			<point x="7.7" y="0.0" z="0.0" hov2nxt="0"/> 
 			<point x="10.0" y="2.5" z="0.0" hov2nxt="0"/> 
-			<point x="10.0" y="5.0" z="0.0" hov2nxt="0"/> 
+			<point x="10.0" y="5.0" z="0.0" hov2nxt="1"/> 
 	</C>
 	<D> 		<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
 			<point x="0.0" y="2.5" z="0.0" hov2nxt="0"/> 
@@ -33,35 +36,57 @@
 			<point x="8.34" y="5.0" z="0.0" hov2nxt="0"/> 
 			<point x="10.0" y="2.5" z="0.0" hov2nxt="0"/> 
 			<point x="10.0" y="0.0" z="0.0" hov2nxt="0"/> 
-			<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
+			<point x="0.0" y="0.0" z="0.0" hov2nxt="1"/> 
 	</D>
-	<L> 		<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
-			<point x="10.0" y="0.0" z="0.0" hov2nxt="0"/> 
-			<point x="10.0" y="5.0" z="0.0" hov2nxt="0"/> 
-	</L>
-	<E> 		<point x="0.0" y="5.0" z="0.0" hov2nxt="0"/>
+        <E> 		<point x="0.0" y="5.0" z="0.0" hov2nxt="0"/>
                         <point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
 			<point x="10.0" y="0.0" z="0.0" hov2nxt="0"/> 
 			<point x="10.0" y="5.0" z="0.0" hov2nxt="1"/> 
                         <point x="5.0" y="0.0" z="0.0" hov2nxt="0"/>
                         <point x="5.0" y="5.0" z="0.0" hov2nxt="1"/>
-                        <point x="0.0" y="5.0" z="0.0" hov2nxt="0"/> 
- 
+                        <point x="0.0" y="5.0" z="0.0" hov2nxt="1"/> 
 	</E>
+        <F> 		<point x="0.0" y="5.0" z="0.0" hov2nxt="0"/>
+                        <point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
+			<point x="10.0" y="0.0" z="0.0" hov2nxt="1"/> 
+                        <point x="5.0" y="0.0" z="0.0" hov2nxt="0"/>
+                        <point x="5.0" y="5.0" z="0.0" hov2nxt="1"/>
+                        <point x="0.0" y="5.0" z="0.0" hov2nxt="1"/> 
+	</F>
+        <G> 		<point x="0.0" y="5.0" z="0.0" hov2nxt="0"/>
+                        <point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
+			<point x="10.0" y="0.0" z="0.0" hov2nxt="1"/> 
+                        <point x="5.0" y="0.0" z="0.0" hov2nxt="0"/>
+                        <point x="5.0" y="5.0" z="0.0" hov2nxt="1"/>
+                        <point x="0.0" y="5.0" z="0.0" hov2nxt="1"/> 
+	</G>
+        <P> 		<point x="0.0" y="5.0" z="0.0" hov2nxt="0"/>
+                        <point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
+			<point x="10.0" y="0.0" z="0.0" hov2nxt="0"/> 
+                        <point x="10.0" y="5.0" z="0.0" hov2nxt="0"/>
+                        <point x="5.0" y="5.0" z="0.0" hov2nxt="0"/>
+                        <point x="0.0" y="5.0" z="0.0" hov2nxt="1"/>
+                        <point x="5.0" y="0.0" z="0.0" hov2nxt="1"/> 
+	</P>
+	<L> 		<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
+			<point x="10.0" y="0.0" z="0.0" hov2nxt="0"/> 
+			<point x="10.0" y="5.0" z="0.0" hov2nxt="1"/> 
+	</L>
+
 	<V> 		<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
 			<point x="10.0" y="2.5" z="0.0" hov2nxt="0"/> 
-			<point x="0.0" y="5.0" z="0.0" hov2nxt="0"/> 
+			<point x="0.0" y="5.0" z="0.0" hov2nxt="1"/> 
 	</V>
 	<W> 		<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
 			<point x="10.0" y="1.25" z="0.0" hov2nxt="0"/> 
 			<point x="4.0" y="2.5" z="0.0" hov2nxt="0"/> 
 			<point x="10.0" y="3.75" z="0.0" hov2nxt="0"/> 
-			<point x="0.0" y="5.0" z="0.0" hov2nxt="0"/> 
+			<point x="0.0" y="5.0" z="0.0" hov2nxt="1"/> 
 	</W>
 	<NOT_IMPL> 	<point x="2.0" y="2.0" z="0.0" hov2nxt="0"/> 
 			<point x="8.0" y="2.0" z="0.0" hov2nxt="0"/> 
 			<point x="8.0" y="8.0" z="0.0" hov2nxt="0"/> 
 			<point x="2.0" y="8.0" z="0.0" hov2nxt="0"/> 
-			<point x="2.0" y="2.0" z="0.0" hov2nxt="0"/> 
+			<point x="2.0" y="2.0" z="0.0" hov2nxt="1"/> 
 	</NOT_IMPL>		
 </letter_database>
