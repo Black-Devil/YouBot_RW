@@ -43,6 +43,7 @@ from python_qt_binding.QtGui import *#QFileDialog, QIcon, QWidget
 from youbot_rw_rqt_gui.msg import *
 from std_msgs.msg import *
 import vrep_controll
+from std_msgs.msg import Empty
 
 import status_intf as status
 
@@ -82,6 +83,7 @@ class YouBotGuiWidget(QWidget):
 
         #self.my_node = rospy.init_node('youbot_rw_gui_node')
         self.pub_write_cmd = rospy.Publisher('/youbot_rw/gui2node', rw_node, tcp_nodelay=True,queue_size=1)
+        self.pub_reset = rospy.Publisher('/youbot_rw/reset', Empty, tcp_nodelay=True,queue_size=1)
         rospy.Subscriber('/youbot_rw/node2gui', rw_node_state, self.callback_status_cmd)
 
         self.setObjectName('YouBot_RW_GUI')
@@ -132,6 +134,8 @@ class YouBotGuiWidget(QWidget):
         event.accept()
 
     def _handle_reset_clicked(self):
+        msg=Empty()
+        self.pub_reset.publish(msg)
         vrep_controll.TriggerSimualtion()
         vrep_controll.stopSimualtion()
         vrep_controll.TriggerSimualtion()

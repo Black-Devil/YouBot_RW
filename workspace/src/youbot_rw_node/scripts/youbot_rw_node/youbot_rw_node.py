@@ -14,6 +14,7 @@ import kinematics_geom as kin
 import kinematics_nummeric
 import status_intf as status
 from youbot_rw_rqt_gui.msg import *
+from std_msgs.msg import Empty
 import sync
 import vrep_controll
 
@@ -33,14 +34,13 @@ class Node(object):
         self.kinematic_type = "Nummeric"
 
         rospy.init_node('youbot_rw_node')
-
-        self.init_params()
-
+        self.init_params(0)
         self.run_status = True
         self.spin_count = 0
         self.r = rospy.Rate(self.rate)
 
         rospy.Subscriber('/youbot_rw/gui2node', rw_node, self.callback_process_cmd)
+        rospy.Subscriber('/youbot_rw/reset', Empty, self.init_params)
         self.pub2gui = rospy.Publisher('/youbot_rw/node2gui', rw_node_state, tcp_nodelay=True, queue_size=1)
         # Publisher for vrep interface
         self.pub2vrep_joint_1_trgt = rospy.Publisher('/youbot_rw/vrep/arm_joint1_target', Float64, tcp_nodelay=True, queue_size=1)
@@ -48,6 +48,61 @@ class Node(object):
         self.pub2vrep_joint_3_trgt = rospy.Publisher('/youbot_rw/vrep/arm_joint3_target', Float64, tcp_nodelay=True, queue_size=1)
         self.pub2vrep_joint_4_trgt = rospy.Publisher('/youbot_rw/vrep/arm_joint4_target', Float64, tcp_nodelay=True, queue_size=1)
         self.pub2vrep_joint_5_trgt = rospy.Publisher('/youbot_rw/vrep/arm_joint5_target', Float64, tcp_nodelay=True, queue_size=1)
+
+
+
+        self.spin()
+
+
+    def init_params(self, msg):
+        """ init parameters for main node of youbot remote writing
+
+        @return <b><i><c> [void]: </c></i></b> nothing
+        """
+        self.rate = 100
+        self.disable = False
+        self.status = 1  # 0= error 1= no error
+        self.status_string = "no error"
+        self.status_vrep = 0  # 0=doing nothing 1= in progress 2= movement done
+        self.kinematics = kin.Kinematics_geom()
+        self.kin_num = kinematics_nummeric.Kinematics_num()
+        self.config_thetas = np.array([0.0,
+                                       0.0,
+                                       0.0,
+                                       0.0,
+                                       0.0])
+
+        self.config_cur_pos = np.array([np.nan,
+                                        np.nan,
+                                        np.nan])
+        self.config_trgt_pos = np.array([np.nan,
+                                         np.nan,
+                                         np.nan])
+
+        self.hoverOffset = 0.02
+        self.line = 0
+        self.line_ending_threshold = 0.1
+        self.start_line_offset = -0.00
+        self.nextLetterPos = np.array([self.start_line_offset, -self.line_ending_threshold, 0])
+        # z coordinate
+
+        # parse xml letter database
+        script_path = os.path.dirname(os.path.abspath(__file__))
+        print("script dir: "), script_path
+        tmp_use_rosparam_path = rospy.get_param("/youbot_rw_node/general/USE_ROSPARAM_PATH_FOR_DATABASE")
+        if (tmp_use_rosparam_path):
+            db_path = rospy.get_param("/youbot_rw_node/general/PATH_OF_LETTER_DATABASE")
+        else:
+            db_path = script_path + '/../../../../../material/YouBot_RW_Material/Buchstaben_Datenbank/letter_database.xml'
+
+        print("opening following letter_database: "), db_path
+        self.letter_database = ET.parse(db_path)
+        self.ldb_root = self.letter_database.getroot()
+
+        # print loaded ldb elements
+        print("Loaded "), self.ldb_root.tag, (": ")
+        for letter in self.ldb_root:
+            print(letter.tag)
 
         sync.init_sync()
         vrep_controll.TriggerSimualtion()
@@ -82,66 +137,6 @@ class Node(object):
         self.config_thetas[4] = math.degrees(self.config_thetas_bogen[4])
 
         self.config_cur_pos = self.kinematics.direct_kin(self.config_thetas_bogen)
-
-        self.spin()
-
-
-    def init_params(self):
-        """ init parameters for main node of youbot remote writing
-
-        @return <b><i><c> [void]: </c></i></b> nothing
-        """
-        self.rate = 100
-        self.disable = False
-        self.status = 1  # 0= error 1= no error
-        self.status_string = "no error"
-        self.status_vrep = 0  # 0=doing nothing 1= in progress 2= movement done
-        self.kinematics = kin.Kinematics_geom()
-        self.kin_num = kinematics_nummeric.Kinematics_num()
-        self.config_thetas = np.array([0.0,
-                                       0.0,
-                                       0.0,
-                                       0.0,
-                                       0.0])
-        self.config_thetas_bogen = np.array([0.0,
-                                             0.0,
-                                             0.0,
-                                             0.0,
-                                             0.0])
-
-        self.config_cur_pos = np.array([np.nan,
-                                        np.nan,
-                                        np.nan])
-        self.config_trgt_pos = np.array([np.nan,
-                                         np.nan,
-                                         np.nan])
-
-        self.hoverOffset = 0.02
-        self.line = 0
-        self.line_ending_threshold = 0.1
-        self.start_line_offset = -0.00
-        self.nextLetterPos = np.array([self.start_line_offset, -self.line_ending_threshold, 0])
-        # z coordinate
-
-        # parse xml letter database
-        script_path = os.path.dirname(os.path.abspath(__file__))
-        print("script dir: "), script_path
-        tmp_use_rosparam_path = rospy.get_param("/youbot_rw_node/general/USE_ROSPARAM_PATH_FOR_DATABASE")
-        if (tmp_use_rosparam_path):
-            db_path = rospy.get_param("/youbot_rw_node/general/PATH_OF_LETTER_DATABASE")
-        else:
-            db_path = script_path + '/../../../../../material/YouBot_RW_Material/Buchstaben_Datenbank/letter_database.xml'
-
-        print("opening following letter_database: "), db_path
-        self.letter_database = ET.parse(db_path)
-        self.ldb_root = self.letter_database.getroot()
-
-        # print loaded ldb elements
-        print("Loaded "), self.ldb_root.tag, (": ")
-        for letter in self.ldb_root:
-            print(letter.tag)
-
-            # do init here
 
 
     def spin(self):
@@ -181,6 +176,7 @@ class Node(object):
         self.pub2vrep_joint_5_trgt.publish(trgts_bogen[4])
         sync.wait_untel_pos(trgts_bogen)
         #time.sleep(0.01)
+
 
 
     def callback_process_cmd(self, msg):
@@ -476,9 +472,9 @@ class Node(object):
         :returns: todo
         :rtype: todo
         """
-
+        print "cur_pos1: ", self.config_cur_pos
         self.config_cur_pos = self.kinematics.direct_kin(self.config_thetas_bogen)
-
+        print "cur_pos2: ", self.config_cur_pos
         if self.kinematic_type == "Nummeric":
             print("== using  nummeric kinematics ==")
             resolution = 1000
@@ -635,22 +631,24 @@ class Node(object):
         self.config_fontsize = int(msg.Fontsize)
         self.config_pencil_length = float(msg.PencilLength)
         self.config_processMode = int(msg.processmode)
-        self.config_thetas = np.array([msg.Theta_1,
-                                       msg.Theta_2,
-                                       msg.Theta_3,
-                                       msg.Theta_4,
-                                       msg.Theta_5])
 
-        self.config_thetas = self.kinematics.offset2world(self.config_thetas)
-        self.config_thetas_bogen = np.array([math.radians(self.config_thetas[0]),
-                                             math.radians(self.config_thetas[1]),
-                                             math.radians(self.config_thetas[2]),
-                                             math.radians(self.config_thetas[3]),
-                                             math.radians(self.config_thetas[4])])
-        #print("parse input: "), self.config_thetas
-        self.config_trgt_pos = np.array([msg.Pos_X,
-                                         msg.Pos_Y,
-                                         msg.Pos_Z])
+        if self.config_processMode == status.PROCESSING_MODE_PTP_ANGLES:
+            self.config_thetas = np.array([msg.Theta_1,
+                                           msg.Theta_2,
+                                           msg.Theta_3,
+                                           msg.Theta_4,
+                                           msg.Theta_5])
+
+            self.config_thetas = self.kinematics.offset2world(self.config_thetas)
+            self.config_thetas_bogen = np.array([math.radians(self.config_thetas[0]),
+                                                 math.radians(self.config_thetas[1]),
+                                                 math.radians(self.config_thetas[2]),
+                                                 math.radians(self.config_thetas[3]),
+                                                 math.radians(self.config_thetas[4])])
+            #print("parse input: "), self.config_thetas
+            self.config_trgt_pos = np.array([msg.Pos_X,
+                                             msg.Pos_Y,
+                                             msg.Pos_Z])
 
         #DATA
         self.data_string = msg.letters
