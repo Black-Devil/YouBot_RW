@@ -97,7 +97,7 @@ class Kinematics_geom(Kinematics_base):
         #print "tcp: ", tcp.transpose()
         tcp = self.resetZeroEquality(tcp)
 
-        # offset calculate Wrist point under condition that Wrist is 45degree up on write plane
+        # offset calculate Wrist point under condition that Wrist is condition_angle degree up on write plane
         wp_cond  = self.transform2wrist_point_under_condition(tcp,math.radians(condition_angle))
         wp_cond = self.resetZeroEquality(wp_cond)
         #print "wpoint: [%.4f; %.4f; %.4f; %.4f]" % (wp_cond[0],wp_cond[1],wp_cond[2], wp_cond[3])
@@ -355,7 +355,7 @@ class Kinematics_geom(Kinematics_base):
         return True
 
 
-    def get_valid_inverse_kin_solutions(self, point, fastCalc, limit_solution, return_conditions):
+    def get_valid_inverse_kin_solutions(self, point, fastCalc, limit_solution, return_conditions, trgt_condition):
         """ todo
 
         :param todo
@@ -367,12 +367,17 @@ class Kinematics_geom(Kinematics_base):
 
         #ik_solutions = self.inverse_kin(point, condition_angle)
         condition_angle = np.array
-        if(fastCalc):
-            condition_angle = np.array([ 5.0, 25.0, 45.0, 65])
+        if(trgt_condition != -1):
+            condition_angle = np.array([trgt_condition])
         else:
-            condition_angle = np.array([ 0.0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0 , 50.0, 55.0, 60.0, 65.0])
+            if(fastCalc):
+                condition_angle = np.array([ 5.0, 25.0, 45.0, 65])
+            else:
+                condition_angle = np.array([ 0.0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0 , 50.0, 55.0, 60.0, 65.0])
         #ik_solutions = list()
         #ik_solutions_condition = list()
+
+        print("ik_point: "), point, ("ik_condition_angle_vec: "), condition_angle
 
         valid_solutions = list()
         valid_solutions_condition = list()
@@ -383,6 +388,7 @@ class Kinematics_geom(Kinematics_base):
                     break
             #print "condition: ", condition_angle[i]
             tmpSol =  self.inverse_kin(point, condition_angle[i])
+            #print("raw ik Sol: "), tmpSol
             for k in tmpSol:
                 if self.isSolutionValid(k) == True:
                     if not (limit_solution):

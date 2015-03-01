@@ -567,10 +567,10 @@ class Node(object):
                             current_trgt = np.array([origin[0] + k * step_vec[0], origin[1] + k * step_vec[1], origin[2] + k * step_vec[2]])
 
                         # calc inverse kinematik for current target
-                        #valid_ik_solutions, valid_ik_solutions_condition = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, True, limit_solution, True)
+                        #valid_ik_solutions, valid_ik_solutions_condition = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, True, limit_solution, True, -1)
                         #if not valid_ik_solutions:
                             # try again without fast calculation
-                            valid_ik_solutions, valid_ik_solutions_condition = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, False, limit_solution, True)
+                            valid_ik_solutions, valid_ik_solutions_condition = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, False, limit_solution, True, -1)
                             if not valid_ik_solutions:
                                 print("Found no ik solution for point(%.4f; %.4f; %.4f). Processing goes on with next point.") % (current_trgt[0], current_trgt[1], current_trgt[2])
                             else:
@@ -606,12 +606,33 @@ class Node(object):
                                     last_condition = valid_ik_solutions_condition[0]
                                     last_condition_vec = valid_ik_solutions_condition
                                 else:
-                                    best_sol, last_condition, last_condition_vec = self.get_best_sol_through_condition(last_condition, last_condition_vec, valid_sol_nosing, valid_sol_nosing_cond)
+                                    last_condition_tmp = last_condition
+                                    best_sol, last_condition, last_condition_vec, condChangeHandleTrgt = self.get_best_sol_through_condition(last_condition, last_condition_vec, valid_sol_nosing, valid_sol_nosing_cond)
                                     #print("cur_condition:"), last_condition
                                     # TODO: if condition changes, handle this
+                                    if(condChangeHandleTrgt != -1):
+                                        # transfer to condChangeHandleTrgt in the last point through interpolation
+                                        print("curPos_tmp: "), lastPos_tmp
+                                        handle_steps = 20
+                                        conditionDiffStep = (condChangeHandleTrgt - last_condition_tmp) / float(handle_steps)
+                                        print("conditionDiffStep: "), conditionDiffStep
+                                        for h in range(1, handle_steps + 1):
+                                            cur_inter_condition = last_condition_tmp + (h * conditionDiffStep)
+                                            print("curpoint: "), lastPos_tmp, ("| cur_inter_condition: "), cur_inter_condition
+                                            valid_ik_solutions_tmp, valid_ik_solutions_condition_tmp = self.kinematics.get_valid_inverse_kin_solutions(lastPos_tmp, False, limit_solution, True, cur_inter_condition)
+                                            print("valid_ik_solutions_tmp: "), valid_ik_solutions_tmp#, ("| valid_ik_solutions_condition_tmp: "), valid_ik_solutions_condition_tmp
+                                            self.move_arm(valid_ik_solutions_tmp[0], True)
+
+                                        # go to current target point under condChangeHandleTrgt
+                                        valid_ik_solutions_tmp = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, False, limit_solution, False, condChangeHandleTrgt)
+                                        best_sol = valid_ik_solutions_tmp[0]
+                                        last_condition = condChangeHandleTrgt
 
                             else:
                                 best_sol = valid_ik_solutions[0]
+
+                            # workaround for bug in condition change handling
+                            lastPos_tmp = current_trgt
 
                             # do the movement
                             self.move_arm(best_sol, True)
@@ -639,7 +660,7 @@ class Node(object):
 
         if (last_condition == -1):
             # take first solution
-            return solutions[0], solutions_cond[0], solutions_cond
+            return solutions[0], solutions_cond[0], solutions_cond, -1
 
         else:
             # take best solution
@@ -647,7 +668,7 @@ class Node(object):
             for s in solutions_cond:
                 int_counter = int_counter + 1
                 if (s == last_condition):
-                    return solutions[int_counter], s, solutions_cond
+                    return solutions[int_counter], s, solutions_cond, -1
             print("WARNING: condition changed in this step")
             print("last_condition: "), last_condition, ("| last has_no_sing_conditions: "), last_has_no_sing_conditions, ("| current has_no_sing_conditions: "), solutions_cond
             # condition change handling --> search matching condition in last and current solution conditions and transfer to found match(condition) in the last point
@@ -660,12 +681,7 @@ class Node(object):
                     match = a
                     break
 
-
-
-
-
-
-            return solutions[0], solutions_cond[0], solutions_cond
+            return solutions[0], solutions_cond[0], solutions_cond, match
 
 
     def parse_input_from_gui(self, msg):
