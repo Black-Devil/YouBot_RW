@@ -66,15 +66,7 @@ class Node(object):
         self.status_vrep = 0  # 0=doing nothing 1= in progress 2= movement done
         self.kinematics = kin.Kinematics_geom()
         self.kin_num = kinematics_nummeric.Kinematics_num()
-        self.config_thetas = np.array([0.0,
-                                       0.0,
-                                       0.0,
-                                       0.0,
-                                       0.0])
 
-        self.config_cur_pos = np.array([np.nan,
-                                        np.nan,
-                                        np.nan])
         self.config_trgt_pos = np.array([np.nan,
                                          np.nan,
                                          np.nan])
@@ -114,7 +106,7 @@ class Node(object):
         vrep_controll.TriggerSimualtion()
         vrep_controll.startSimualtion()
         vrep_controll.TriggerSimualtion()
-        vrep_controll.setSyncSimualtion()
+        #vrep_controll.setSyncSimualtion()
         vrep_controll.TriggerSimualtion()
         vrep_controll.TriggerSimualtion()
         vrep_controll.TriggerSimualtion()
@@ -129,12 +121,9 @@ class Node(object):
         vrep_controll.TriggerSimualtion()
 
         self.config_thetas_bogen = np.array(sync.getJointPostition())
+        self.desired_thetas_bogen =  self.config_thetas_bogen
+        self.config_thetas = np.rad2deg(self.config_thetas_bogen)
 
-        self.config_thetas[0] = math.degrees(self.config_thetas_bogen[0])
-        self.config_thetas[1] = math.degrees(self.config_thetas_bogen[1])
-        self.config_thetas[2] = math.degrees(self.config_thetas_bogen[2])
-        self.config_thetas[3] = math.degrees(self.config_thetas_bogen[3])
-        self.config_thetas[4] = math.degrees(self.config_thetas_bogen[4])
 
         self.config_cur_pos = self.kinematics.direct_kin(self.config_thetas_bogen)
 
@@ -153,8 +142,21 @@ class Node(object):
         self.spin_count -= 1
 
 
-    def send_vrep_joint_targets(self, trgts, bogen):
-        # rospy.loginfo("send vrep joint targets")
+    def send_vrep_joint_targets(self, trgts):
+        self.pub2vrep_joint_1_trgt.publish(trgts[0])
+        self.pub2vrep_joint_2_trgt.publish(trgts[1])
+        self.pub2vrep_joint_3_trgt.publish(trgts[2])
+        self.pub2vrep_joint_4_trgt.publish(trgts[3])
+        self.pub2vrep_joint_5_trgt.publish(trgts[4])
+        self.pub2vrep_joint_5_trgt.publish(trgts[4])
+        self.desired_thetas_bogen=trgts
+        #sync.wait_untel_pos(trgts)
+
+
+
+
+    def move_arm(self, trgts, bogen):
+         # rospy.loginfo("send vrep joint targets")
         if bogen:
             trgts_bogen = np.array([(trgts[0]),
                                     (trgts[1]),
@@ -167,15 +169,35 @@ class Node(object):
                                     (((2. * np.pi) / 360.) * trgts[2]),
                                     (((2. * np.pi) / 360.) * trgts[3]),
                                     (((2. * np.pi) / 360.) * trgts[4])])
+        if self.check_angle_movement(trgts_bogen):
+            self.send_vrep_joint_targets(trgts_bogen)
+        else:
+            self.process_linear_angle_movement(trgts_bogen)
 
-        self.pub2vrep_joint_1_trgt.publish(trgts_bogen[0])
-        self.pub2vrep_joint_2_trgt.publish(trgts_bogen[1])
-        self.pub2vrep_joint_3_trgt.publish(trgts_bogen[2])
-        self.pub2vrep_joint_4_trgt.publish(trgts_bogen[3])
-        self.pub2vrep_joint_5_trgt.publish(trgts_bogen[4])
-        self.pub2vrep_joint_5_trgt.publish(trgts_bogen[4])
-        sync.wait_untel_pos(trgts_bogen)
-        #time.sleep(0.01)
+
+
+    def check_angle_movement(self, trgts):
+        smal = True
+        for i,j in enumerate(trgts):
+            if abs(trgts[i]-self.desired_thetas_bogen[i]) > 0.05:
+                smal=False
+        return smal
+
+    def process_linear_angle_movement(self, trgts):
+        print "Process linear angle movement , elbow change or singularity?"
+        res=0.005
+        angle_change=trgts-self.desired_thetas_bogen
+        max_change=max(abs(angle_change))
+        steps=max_change/res
+        print "steps: ", steps
+        for i in xrange(1, int(steps)):
+            new_joints=self.desired_thetas_bogen+(angle_change/int(steps))
+            erg=self.kin_num.step_to_point(self.config_cur_pos,new_joints[3])
+            self.send_vrep_joint_targets(erg)
+        print "Process linear angle movement, DONE!"
+
+
+
 
 
 
@@ -225,7 +247,7 @@ class Node(object):
         print("triggered angles")
         # tmp = self.kinematics.offset2world(self.config_thetas_bogen)
         if (self.kinematics.isSolutionValid(self.config_thetas_bogen)):
-            self.send_vrep_joint_targets(self.config_thetas_bogen, True)
+            self.move_arm(self.config_thetas_bogen, True)
             self.config_cur_pos = self.kinematics.direct_kin(self.config_thetas_bogen)
             print("pos: [%.4f; %.4f; %.4f]" % (self.config_cur_pos[0], self.config_cur_pos[1], self.config_cur_pos[2]) )
             pos_wp = self.kinematics.direct_kin_2_wristPoint(self.config_thetas_bogen)
@@ -257,7 +279,7 @@ class Node(object):
                 joint_pos = sync.getJointPostition()
                 for i in xrange(0, int(resolution), 1):
                     erg = joint_pos + (((angle - joint_pos) / (resolution)) * i)
-                    self.send_vrep_joint_targets(erg, True)
+                    self.move_arm(erg, True)
 
             self.config_cur_pos = self.kinematics.direct_kin(erg)
             self.config_thetas_bogen = erg
@@ -294,7 +316,7 @@ class Node(object):
 
                 #print("debug solutions:"),valid_ik_solutions
 
-                self.send_vrep_joint_targets(valid_ik_solutions[0], True)
+                self.move_arm(valid_ik_solutions[0], True)
                 self.config_cur_pos = self.kinematics.direct_kin(valid_ik_solutions[0])
                 self.config_thetas_bogen = valid_ik_solutions[0]
 
@@ -464,6 +486,7 @@ class Node(object):
         return resPointlist
 
 
+
     def process_linear_movement(self, point_list, limit_solution, check_singularities):
         """ takes np.array of 3d points(np.matrix) and processes linear movement from current position to all points
 
@@ -472,12 +495,10 @@ class Node(object):
         :returns: todo
         :rtype: todo
         """
-        print "cur_pos1: ", self.config_cur_pos
         self.config_cur_pos = self.kinematics.direct_kin(self.config_thetas_bogen)
-        print "cur_pos2: ", self.config_cur_pos
         if self.kinematic_type == "Nummeric":
             print("== using  nummeric kinematics ==")
-            resolution = 1000
+            resolution = 10000
             erg = [0, 0, 0, 0, 0]
             for point in point_list:
                 lastPoint = self.config_cur_pos
@@ -486,7 +507,7 @@ class Node(object):
                 for i in xrange(0, int(resolution * steps), 1):
                     dummy = lastPoint + ((point - lastPoint) / (resolution * steps)) * i
                     erg = self.kin_num.step_to_point(dummy)
-                    self.send_vrep_joint_targets(erg, True)
+                    self.move_arm(erg, True)
                 self.config_cur_pos = np.array(point)
                 self.config_thetas_bogen = erg
 
@@ -582,7 +603,7 @@ class Node(object):
                                 best_sol = valid_ik_solutions[0]
 
                             # do the movement
-                            self.send_vrep_joint_targets(best_sol, True)
+                            self.move_arm(best_sol, True)
                             self.config_cur_pos = np.array([i[0], i[1], i[2]])
                             self.config_thetas_bogen = best_sol
 
