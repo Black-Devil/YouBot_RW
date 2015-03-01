@@ -141,7 +141,7 @@ class Kinematics_num(Kinematics_base):
         return new_thetas
 
 
-    def step_to_point(self, point):
+    def step_to_point(self, point, theta3=None):
         """ gets an solution to reach point if possible, uses optimizer or brute force if necessary
         @param [in] point <b><i><c> [vector-3]: </c></i></b> point to reach
         @return <b><i><c> [vector-4]: </c></i></b> joint states (solution)
@@ -151,18 +151,19 @@ class Kinematics_num(Kinematics_base):
         #if math.sqrt((point[0] + 0.35) ** 2 + (point[1]) ** 2) > 0.50:
         #    print "Point is not reachable"
         #    return None
+        self.theta3=theta3
 
         self.destination_point = point
         if self.last_solution is None:
             self.last_solution = self.find_best_solution(self.search_all_solutions(point, 6))
 
-        erg = self.minimize(self.last_solution)
+        erg = self.minimize(self.last_solution, theta3)
 
         if self.checkSolution(erg):
             return erg
         else:
             init_res = 10
-            erg = self.minimize(self.init_point)
+            erg = self.minimize(self.init_point, theta3)
             while not self.checkSolution(erg):
                 if init_res < 9:
                     print "Point is not reachable, resolution 2 smal?"
@@ -185,7 +186,7 @@ class Kinematics_num(Kinematics_base):
         @param [in] solution <b><i><c> [vector-4]: </c></i></b> solution to check
         @return <b><i><c> [bool]: </c></i></b> true if solution is good
         """
-        if self.err_function(solution) > 0.0001 or not self.isSolutionValid(solution):
+        if self.err_function(solution) > 0.00001 or not self.isSolutionValid(solution):
             return False
         else:
             return True
@@ -193,15 +194,27 @@ class Kinematics_num(Kinematics_base):
     def distance(point, last_solution):
         return 0
 
-    def minimize(self, startPoint):
+
+    def condition(self, thetas):
+        #print thetas
+        return thetas[3]-self.theta3
+
+
+    def minimize(self, startPoint, theta3=None):
         """ minimize the distance to destination point
 
         @param [in] startPoint <b><i><c> [vector-4]: </c></i></b> Point to start the optimisation (Joint-Angles)
         @return <b><i><c> [vector-5]: </c></i></b> hopefully a solution of the ik problem
         """
-        erg = minimize(self.err_function, startPoint[0:4], method='SLSQP', options={'maxiter': 1e6, 'disp': False},
-                       bounds=[(self.min_angles_[0], self.max_angles_[0]), (self.min_angles_[1], self.max_angles_[1]),
-                               (self.min_angles_[2], self.max_angles_[2]), (self.min_angles_[3], self.max_angles_[3])])
+
+        if theta3 is None:
+            erg = minimize(self.err_function, startPoint[0:4], method='SLSQP', options={'maxiter': 1e6, 'disp': False},
+                           bounds=[(self.min_angles_[0], self.max_angles_[0]), (self.min_angles_[1], self.max_angles_[1]),
+                                   (self.min_angles_[2], self.max_angles_[2]), (self.min_angles_[3], self.max_angles_[3])])
+        else:
+            erg = minimize(self.err_function, startPoint[0:4],constraints={'type':'eq','fun':self.condition}, method='SLSQP', options={'maxiter': 1e6, 'disp': False},
+                           bounds=[(self.min_angles_[0], self.max_angles_[0]), (self.min_angles_[1], self.max_angles_[1]),
+                                   (self.min_angles_[2], self.max_angles_[2]), (self.min_angles_[3], self.max_angles_[3])])
         return [erg.x[0], erg.x[1], erg.x[2], erg.x[3], 0]
 
 
