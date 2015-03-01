@@ -524,19 +524,19 @@ class Node(object):
                     #print("current point: "), i
                     #print("stepcount: "), step_count_int
 
-                    # process single point out of pointlist
+                    # process single point out of pointlist (interpolate position changes between letter points)
                     for k in range(1, step_count_int + 1):
 
                         current_valid = False
-                        #print k
+                        # for the last step: go to target position
                         if (k == step_count_int):
-                            #print("debug k = "),int(1.0/step_size)+1
                             current_trgt = np.array([i[0], i[1], i[2]])
+                        # for the other steps
                         else:
                             current_trgt = np.array([origin[0] + k * step_vec[0], origin[1] + k * step_vec[1], origin[2] + k * step_vec[2]])
 
-                        # calc inverse kinematik for current point
-                        valid_ik_solutions, valid_ik_solutions_condition = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, True, limit_solution, True)
+                        # calc inverse kinematik for current target
+                        valid_ik_solutions, valid_ik_solutions_condition = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, False, limit_solution, True)
                         if not valid_ik_solutions:
                             #try again without fast calculation
                             valid_ik_solutions, valid_ik_solutions_condition = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, False, limit_solution, True)
