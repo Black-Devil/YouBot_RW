@@ -537,6 +537,7 @@ class Node(object):
             # init on current angles
             last_angles = self.config_thetas_bogen
             last_condition = -1
+            last_condition_vec = -1
 
             # process pointlist
             for i in point_list:
@@ -566,16 +567,16 @@ class Node(object):
                             current_trgt = np.array([origin[0] + k * step_vec[0], origin[1] + k * step_vec[1], origin[2] + k * step_vec[2]])
 
                         # calc inverse kinematik for current target
-                        valid_ik_solutions, valid_ik_solutions_condition = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, False, limit_solution, True)
-                        if not valid_ik_solutions:
-                            #try again without fast calculation
+                        #valid_ik_solutions, valid_ik_solutions_condition = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, True, limit_solution, True)
+                        #if not valid_ik_solutions:
+                            # try again without fast calculation
                             valid_ik_solutions, valid_ik_solutions_condition = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, False, limit_solution, True)
                             if not valid_ik_solutions:
                                 print("Found no ik solution for point(%.4f; %.4f; %.4f). Processing goes on with next point.") % (current_trgt[0], current_trgt[1], current_trgt[2])
                             else:
                                 current_valid = True
-                        else:
-                            current_valid = True
+                        #else:
+                        #    current_valid = True
 
                         if current_valid:
 
@@ -603,8 +604,9 @@ class Node(object):
                                     print("!!! SINGULARITY happened !!!")
                                     best_sol = valid_ik_solutions[0]
                                     last_condition = valid_ik_solutions_condition[0]
+                                    last_condition_vec = valid_ik_solutions_condition
                                 else:
-                                    best_sol, last_condition = self.get_best_sol_through_condition(last_condition, valid_sol_nosing, valid_sol_nosing_cond)
+                                    best_sol, last_condition, last_condition_vec = self.get_best_sol_through_condition(last_condition, last_condition_vec, valid_sol_nosing, valid_sol_nosing_cond)
                                     #print("cur_condition:"), last_condition
                                     # TODO: if condition changes, handle this
 
@@ -630,14 +632,14 @@ class Node(object):
                     self.send_status2gui(status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "linear movement in progress...")
 
 
-    def get_best_sol_through_condition(self, last_condition, solutions, solutions_cond):
+    def get_best_sol_through_condition(self, last_condition, last_has_no_sing_conditions, solutions, solutions_cond):
         if not solutions:
             print("WARNING: solutions is empty")
-            return -1, -1
+            return -1, -1, -1, -1
 
         if (last_condition == -1):
             # take first solution
-            return solutions[0], solutions_cond[0]
+            return solutions[0], solutions_cond[0], solutions_cond
 
         else:
             # take best solution
@@ -645,9 +647,25 @@ class Node(object):
             for s in solutions_cond:
                 int_counter = int_counter + 1
                 if (s == last_condition):
-                    return solutions[int_counter], s
+                    return solutions[int_counter], s, solutions_cond
             print("WARNING: condition changed in this step")
-            return solutions[0], solutions_cond[0]
+            print("last_condition: "), last_condition, ("| last has_no_sing_conditions: "), last_has_no_sing_conditions, ("| current has_no_sing_conditions: "), solutions_cond
+            # condition change handling --> search matching condition in last and current solution conditions and transfer to found match(condition) in the last point
+            # afterwards go on with current point
+
+            match = -1
+
+            for a in last_has_no_sing_conditions:
+                if(a in solutions_cond):
+                    match = a
+                    break
+
+
+
+
+
+
+            return solutions[0], solutions_cond[0], solutions_cond
 
 
     def parse_input_from_gui(self, msg):
