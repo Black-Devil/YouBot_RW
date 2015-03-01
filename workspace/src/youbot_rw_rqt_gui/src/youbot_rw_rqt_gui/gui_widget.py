@@ -76,6 +76,7 @@ class YouBotGuiWidget(QWidget):
         self.processMode_comboBox.addItem("LIN Angles")
 
 
+
         self.kinematic_comboBox.addItem("geometric")
         self.kinematic_comboBox.addItem("nummeric")
 
@@ -92,6 +93,7 @@ class YouBotGuiWidget(QWidget):
         
         self.write_button.clicked[bool].connect(self._handle_write_clicked)
         self.resetButton.clicked[bool].connect(self._handle_reset_clicked)
+        self.stopButton.clicked[bool].connect(self._handle_stop_clicked)
         self.set_status_text.connect(self._set_status_text)
        
         self.closeEvent = self.handle_close
@@ -132,6 +134,14 @@ class YouBotGuiWidget(QWidget):
         #self.shutdown_all()
 
         event.accept()
+
+    def _handle_stop_clicked(self):
+        msg=Empty()
+        self.pub_reset.publish(msg)
+        vrep_controll.TriggerSimualtion()
+        vrep_controll.stopSimualtion()
+        vrep_controll.TriggerSimualtion()
+        vrep_controll.TriggerSimualtion()
 
     def _handle_reset_clicked(self):
         msg=Empty()

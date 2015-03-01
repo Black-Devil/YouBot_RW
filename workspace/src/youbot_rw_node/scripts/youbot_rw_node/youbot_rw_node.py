@@ -22,7 +22,6 @@ import vrep_controll
 class Node(object):
     def __init__(self):
         """ init main ros node of youbot remote writing
-
         @return <b><i><c> [void]: </c></i></b> nothing
         """
 
@@ -56,7 +55,6 @@ class Node(object):
 
     def init_params(self, msg):
         """ init parameters for main node of youbot remote writing
-
         @return <b><i><c> [void]: </c></i></b> nothing
         """
         self.rate = 100
@@ -92,9 +90,7 @@ class Node(object):
         self.ldb_root = self.letter_database.getroot()
 
         # print loaded ldb elements
-        print("Loaded "), self.ldb_root.tag, (": ")
-        for letter in self.ldb_root:
-            print(letter.tag)
+        print("Loaded "), self.ldb_root.tag, (": "), [x.tag for x in self.ldb_root]
 
         sync.init_sync()
         vrep_controll.TriggerSimualtion()
@@ -122,13 +118,14 @@ class Node(object):
 
         self.config_thetas_bogen = np.array(sync.getJointPostition())
         self.desired_thetas_bogen =  self.config_thetas_bogen
-        self.config_thetas = np.rad2deg(self.config_thetas_bogen)
 
 
         self.config_cur_pos = self.kinematics.direct_kin(self.config_thetas_bogen)
 
 
     def spin(self):
+        """ Program main loop
+        """
         self.spin_count += 1
         if (self.spin_count > 1):
             return
@@ -143,11 +140,13 @@ class Node(object):
 
 
     def send_vrep_joint_targets(self, trgts):
+        """ Sends joint angles to V-REP and waits for reach
+        @param [in] trgts <b><i><c> [vector-5]: </c></i></b> Angles to apply in V-REP in radians
+        """
         self.pub2vrep_joint_1_trgt.publish(trgts[0])
         self.pub2vrep_joint_2_trgt.publish(trgts[1])
         self.pub2vrep_joint_3_trgt.publish(trgts[2])
         self.pub2vrep_joint_4_trgt.publish(trgts[3])
-        self.pub2vrep_joint_5_trgt.publish(trgts[4])
         self.pub2vrep_joint_5_trgt.publish(trgts[4])
         self.desired_thetas_bogen=trgts
         sync.wait_untel_pos(trgts)
@@ -156,7 +155,10 @@ class Node(object):
 
 
     def move_arm(self, trgts, bogen):
-         # rospy.loginfo("send vrep joint targets")
+        """ move the Arm and tests for large angle changes, to prevent destroying write plain
+        @param [in] thetas <b><i><c> [vector-5]: </c></i></b> joint angles
+        """
+
         if bogen:
             trgts_bogen = np.array([(trgts[0]),
                                     (trgts[1]),
@@ -173,17 +175,26 @@ class Node(object):
             self.send_vrep_joint_targets(trgts_bogen)
         else:
             self.process_linear_angle_movement(trgts_bogen)
+        self.config_cur_pos = self.kinematics.direct_kin(trgts_bogen)
+        self.config_thetas_bogen=trgts_bogen
 
 
 
     def check_angle_movement(self, trgts):
-        smal = True
+        """ checks for large angle changes in trgts-thetas to desired_thetas_bogen
+        @param [in] trgts <b><i><c> [vector-5]: </c></i></b> target joint angles
+        @return <b><i><c> [Bool]: </c></i></b> true if change is small
+        """
+        small = True
         for i,j in enumerate(trgts):
             if abs(trgts[i]-self.desired_thetas_bogen[i]) > 0.05:
-                smal=False
-        return smal
+                small=False
+        return small
 
     def process_linear_angle_movement(self, trgts):
+        """ changes arm configuration without leaving target Point
+        @param [in] trgts <b><i><c> [vector-5]: </c></i></b> target joint angles
+        """
         print "Process linear angle movement , elbow change or singularity?"
         res=0.005
         angle_change=trgts-self.desired_thetas_bogen
@@ -192,8 +203,12 @@ class Node(object):
         print "steps: ", steps
         for i in xrange(1, int(steps)):
             new_joints=self.desired_thetas_bogen+(angle_change/int(steps))
-            erg=self.kin_num.step_to_point(self.config_cur_pos,new_joints[3])
-            self.send_vrep_joint_targets(erg)
+            if self.kinematic_type == "Nummeric":
+                erg=self.kin_num.step_to_point(self.config_cur_pos,new_joints[3])
+                self.send_vrep_joint_targets(erg)
+            else:
+                self.send_vrep_joint_targets(new_joints)
+
         print "Process linear angle movement, DONE!"
 
 
@@ -202,6 +217,9 @@ class Node(object):
 
 
     def callback_process_cmd(self, msg):
+        """ Ros callback triggers all actions from gui
+        """
+
         if (not self.run_status):
             return
 
@@ -244,6 +262,8 @@ class Node(object):
 
 
     def process_ptp_angles(self):
+        """ moves Arm without any logic to config_thetas_bogen
+        """
         print("triggered angles")
         # tmp = self.kinematics.offset2world(self.config_thetas_bogen)
         if (self.kinematics.isSolutionValid(self.config_thetas_bogen)):
@@ -320,17 +340,12 @@ class Node(object):
                 self.config_cur_pos = self.kinematics.direct_kin(valid_ik_solutions[0])
                 self.config_thetas_bogen = valid_ik_solutions[0]
 
-        self.config_thetas[0] = math.degrees(self.config_thetas_bogen[0])
-        self.config_thetas[1] = math.degrees(self.config_thetas_bogen[1])
-        self.config_thetas[2] = math.degrees(self.config_thetas_bogen[2])
-        self.config_thetas[3] = math.degrees(self.config_thetas_bogen[3])
-        self.config_thetas[4] = math.degrees(self.config_thetas_bogen[4])
-
         self.send_status2gui(status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "position processing done, found solution")
         if valid_sol:
             print("== ptp position movement done==")
 
     def get_circle(self, radius, from_degree=0, to_degree=360):
+
         data = list()
         while from_degree > 360:
             from_degree -= 360
@@ -513,12 +528,6 @@ class Node(object):
 
                 last_angles = erg
 
-                self.config_thetas[0] = math.degrees(self.config_thetas_bogen[0])
-                self.config_thetas[1] = math.degrees(self.config_thetas_bogen[1])
-                self.config_thetas[2] = math.degrees(self.config_thetas_bogen[2])
-                self.config_thetas[3] = math.degrees(self.config_thetas_bogen[3])
-                self.config_thetas[4] = math.degrees(self.config_thetas_bogen[4])
-
         else:
             print("== using geometric kinematics ==")
             # calc step size
@@ -609,11 +618,6 @@ class Node(object):
 
                             last_angles = best_sol
 
-                            self.config_thetas[0] = math.degrees(self.config_thetas_bogen[0])
-                            self.config_thetas[1] = math.degrees(self.config_thetas_bogen[1])
-                            self.config_thetas[2] = math.degrees(self.config_thetas_bogen[2])
-                            self.config_thetas[3] = math.degrees(self.config_thetas_bogen[3])
-                            self.config_thetas[4] = math.degrees(self.config_thetas_bogen[4])
                             # TODO: sending status to gui here produces sometimes memory errors (WTF!)
                             #self.send_status2gui( status.STATUS_NODE_NO_ERROR, status.STATUS_VREP_WAITING_4_CMD, "linear movement in progress...")
                             # sleep a moment to prevent unsynchronization
@@ -654,19 +658,12 @@ class Node(object):
         self.config_processMode = int(msg.processmode)
 
         if self.config_processMode == status.PROCESSING_MODE_PTP_ANGLES:
-            self.config_thetas = np.array([msg.Theta_1,
-                                           msg.Theta_2,
-                                           msg.Theta_3,
-                                           msg.Theta_4,
-                                           msg.Theta_5])
-
-            self.config_thetas = self.kinematics.offset2world(self.config_thetas)
-            self.config_thetas_bogen = np.array([math.radians(self.config_thetas[0]),
-                                                 math.radians(self.config_thetas[1]),
-                                                 math.radians(self.config_thetas[2]),
-                                                 math.radians(self.config_thetas[3]),
-                                                 math.radians(self.config_thetas[4])])
-            #print("parse input: "), self.config_thetas
+            tmp = np. rad2deg(np.array([msg.Theta_1,
+                            msg.Theta_2,
+                            msg.Theta_3,
+                            msg.Theta_4,
+                            msg.Theta_5]))
+            self.config_thetas_bogen =  self.kinematics.offset2world(tmp)
             self.config_trgt_pos = np.array([msg.Pos_X,
                                              msg.Pos_Y,
                                              msg.Pos_Z])
@@ -684,7 +681,7 @@ class Node(object):
         msg.Pos_X = self.config_cur_pos[0]
         msg.Pos_Y = self.config_cur_pos[1]
         msg.Pos_Z = self.config_cur_pos[2]
-        tmp = self.kinematics.offset2world(self.config_thetas)
+        tmp = self.kinematics.offset2world(np.rad2deg(self.config_thetas_bogen))
         msg.Theta_1 = tmp[0]
         msg.Theta_2 = tmp[1]
         msg.Theta_3 = tmp[2]

@@ -144,6 +144,7 @@ class Kinematics_num(Kinematics_base):
     def step_to_point(self, point, theta3=None):
         """ gets an solution to reach point if possible, uses optimizer or brute force if necessary
         @param [in] point <b><i><c> [vector-3]: </c></i></b> point to reach
+        @param [in] theta3 <b><i><c> [skalar]: </c></i></b> optional theta3 angle as condition for optimizer
         @return <b><i><c> [vector-4]: </c></i></b> joint states (solution)
         """
 
@@ -191,19 +192,19 @@ class Kinematics_num(Kinematics_base):
         else:
             return True
 
-    def distance(point, last_solution):
-        return 0
-
 
     def condition(self, thetas):
-        #print thetas
+        """ Optimizer ciondidion
+        @param [in] thetas <b><i><c> [vector-4]: </c></i></b> angles from optimisation step
+        @return <b><i><c> [skalar]: </c></i></b> distance from provided theta3
+        """
         return thetas[3]-self.theta3
 
 
     def minimize(self, startPoint, theta3=None):
         """ minimize the distance to destination point
-
         @param [in] startPoint <b><i><c> [vector-4]: </c></i></b> Point to start the optimisation (Joint-Angles)
+        @param [in] theta3 <b><i><c> [skalar]: </c></i></b> optional theta3 angle as condition for optimizer
         @return <b><i><c> [vector-5]: </c></i></b> hopefully a solution of the ik problem
         """
 
