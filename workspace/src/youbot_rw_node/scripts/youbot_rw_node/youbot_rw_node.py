@@ -71,7 +71,7 @@ class Node(object):
                                          np.nan,
                                          np.nan])
 
-        self.hoverOffset = 0.02
+        self.hoverOffset = 0.01
         self.line = 0
         self.line_ending_threshold = 0.1
         self.start_line_offset = -0.00
@@ -106,7 +106,7 @@ class Node(object):
         vrep_controll.TriggerSimualtion()
         vrep_controll.startSimualtion()
         vrep_controll.TriggerSimualtion()
-        #vrep_controll.setSyncSimualtion()
+        vrep_controll.setSyncSimualtion()
         vrep_controll.TriggerSimualtion()
         vrep_controll.TriggerSimualtion()
         vrep_controll.TriggerSimualtion()
@@ -150,7 +150,7 @@ class Node(object):
         self.pub2vrep_joint_5_trgt.publish(trgts[4])
         self.pub2vrep_joint_5_trgt.publish(trgts[4])
         self.desired_thetas_bogen=trgts
-        #sync.wait_untel_pos(trgts)
+        sync.wait_untel_pos(trgts)
 
 
 
@@ -498,13 +498,13 @@ class Node(object):
         self.config_cur_pos = self.kinematics.direct_kin(self.config_thetas_bogen)
         if self.kinematic_type == "Nummeric":
             print("== using  nummeric kinematics ==")
-            resolution = 10000
+            resolution = 1000
             erg = [0, 0, 0, 0, 0]
             for point in point_list:
                 lastPoint = self.config_cur_pos
                 print("lin_move from: "), np.round(lastPoint, 3), (" to: "), np.round(point, 3)
                 steps = math.sqrt(sum(i * i for i in point - lastPoint))
-                for i in xrange(0, int(resolution * steps), 1):
+                for i in xrange(0, int(resolution * steps)+1):
                     dummy = lastPoint + ((point - lastPoint) / (resolution * steps)) * i
                     erg = self.kin_num.step_to_point(dummy)
                     self.move_arm(erg, True)

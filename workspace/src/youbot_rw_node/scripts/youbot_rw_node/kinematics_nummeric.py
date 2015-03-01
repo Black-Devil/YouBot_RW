@@ -157,25 +157,25 @@ class Kinematics_num(Kinematics_base):
         if self.last_solution is None:
             self.last_solution = self.find_best_solution(self.search_all_solutions(point, 6))
 
-        erg = self.minimize(self.last_solution, theta3)
+        #erg = self.minimize(self.last_solution, theta3)
 
-        if self.checkSolution(erg):
-            return erg
-        else:
-            init_res = 10
-            erg = self.minimize(self.init_point, theta3)
-            while not self.checkSolution(erg):
-                if init_res < 9:
-                    print "Point is not reachable, resolution 2 smal?"
+        #if self.checkSolution(erg):
+        #    return erg
+        #else:
+        init_res = 10
+        erg = self.minimize(self.init_point, theta3)
+        while not self.checkSolution(erg):
+            if init_res < 9:
+                print "Point is not reachable, resolution to smal?"
+                return None
+            test = self.search_all_solutions(point, init_res)
+            if len(test) > 0:
+                erg = self.find_best_solution(test)
+                if not self.checkSolution(erg):
+                    print "Point is not reachable, error to high!"
                     return None
-                test = self.search_all_solutions(point, init_res)
-                if len(test) > 0:
-                    erg = self.find_best_solution(test)
-                    if not self.checkSolution(erg):
-                        print "Point is not reachable, error to high!"
-                        return None
 
-                init_res -= 1
+            init_res -= 1
 
         self.last_solution = erg
         return erg
@@ -186,7 +186,7 @@ class Kinematics_num(Kinematics_base):
         @param [in] solution <b><i><c> [vector-4]: </c></i></b> solution to check
         @return <b><i><c> [bool]: </c></i></b> true if solution is good
         """
-        if self.err_function(solution) > 0.00001 or not self.isSolutionValid(solution):
+        if self.err_function(solution) > 0.0001 or not self.isSolutionValid(solution):
             return False
         else:
             return True
