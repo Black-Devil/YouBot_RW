@@ -377,7 +377,7 @@ class Kinematics_geom(Kinematics_base):
         #ik_solutions = list()
         #ik_solutions_condition = list()
 
-        print("ik_point: "), point, ("ik_condition_angle_vec: "), condition_angle
+        #print("ik_point: "), point, ("ik_condition_angle_vec: "), condition_angle
 
         valid_solutions = list()
         valid_solutions_condition = list()

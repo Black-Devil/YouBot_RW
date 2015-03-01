@@ -207,6 +207,7 @@ class Node(object):
                 erg=self.kin_num.step_to_point(self.config_cur_pos,new_joints[3])
                 self.send_vrep_joint_targets(erg)
             else:
+                # TODO: calc ik for geometric!
                 self.send_vrep_joint_targets(new_joints)
 
         print "Process linear angle movement, DONE!"
@@ -531,7 +532,7 @@ class Node(object):
         else:
             print("== using geometric kinematics ==")
             # calc step size
-            step_size = 0.002
+            step_size = 0.001
             # max_step = int(1.0/step_size)
 
             # init on current angles
@@ -570,11 +571,11 @@ class Node(object):
                         #valid_ik_solutions, valid_ik_solutions_condition = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, True, limit_solution, True, -1)
                         #if not valid_ik_solutions:
                             # try again without fast calculation
-                            valid_ik_solutions, valid_ik_solutions_condition = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, False, limit_solution, True, -1)
-                            if not valid_ik_solutions:
-                                print("Found no ik solution for point(%.4f; %.4f; %.4f). Processing goes on with next point.") % (current_trgt[0], current_trgt[1], current_trgt[2])
-                            else:
-                                current_valid = True
+                        valid_ik_solutions, valid_ik_solutions_condition = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, False, limit_solution, True, -1)
+                        if not valid_ik_solutions:
+                            print("Found no ik solution for point(%.4f; %.4f; %.4f). Processing goes on with next point.") % (current_trgt[0], current_trgt[1], current_trgt[2])
+                        else:
+                            current_valid = True
                         #else:
                         #    current_valid = True
 
@@ -613,7 +614,7 @@ class Node(object):
                                     if(condChangeHandleTrgt != -1):
                                         # transfer to condChangeHandleTrgt in the last point through interpolation
                                         print("curPos_tmp: "), lastPos_tmp
-                                        handle_steps = 20
+                                        handle_steps = 40
                                         conditionDiffStep = (condChangeHandleTrgt - last_condition_tmp) / float(handle_steps)
                                         print("conditionDiffStep: "), conditionDiffStep
                                         for h in range(1, handle_steps + 1):
