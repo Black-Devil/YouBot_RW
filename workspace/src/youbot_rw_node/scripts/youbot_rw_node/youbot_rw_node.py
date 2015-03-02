@@ -266,7 +266,8 @@ class Node(object):
         """ moves Arm without any logic to config_thetas_bogen
         """
         print("triggered angles")
-        # tmp = self.kinematics.offset2world(self.config_thetas_bogen)
+        #tmp = self.kinematics.offset2world(self.config_thetas_bogen)
+        #print("angles: "), self.config_thetas_bogen
         if (self.kinematics.isSolutionValid(self.config_thetas_bogen)):
             self.move_arm(self.config_thetas_bogen, True)
             self.config_cur_pos = self.kinematics.direct_kin(self.config_thetas_bogen)
@@ -693,7 +694,7 @@ class Node(object):
         self.config_processMode = int(msg.processmode)
 
         if self.config_processMode == status.PROCESSING_MODE_PTP_ANGLES:
-            tmp = np. rad2deg(np.array([msg.Theta_1,
+            tmp = np.deg2rad(np.array([msg.Theta_1,
                             msg.Theta_2,
                             msg.Theta_3,
                             msg.Theta_4,
