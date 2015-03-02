@@ -308,16 +308,16 @@ class Node(object):
         else:
             print("== using  geometric kinematics ==")
             # time.sleep(0.2)
-
-            tmpPos = np.matrix((self.config_trgt_pos[0], self.config_trgt_pos[1], self.config_trgt_pos[2])).transpose()
-            #print "input ik", tmpPos
-            valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(tmpPos, True, False, False)
+            #self.config_cur_pos = self.kinematics.direct_kin(self.config_thetas_bogen)
+            #tmpPos = np.matrix((self.config_trgt_pos[0], self.config_trgt_pos[1], self.config_trgt_pos[2])).transpose()
+            print "target pos:", self.config_trgt_pos
+            valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(self.config_trgt_pos, True, False, False,-1)
             #print("debug get valid ik solutions")
             #time.sleep(0.2)
 
             if not valid_ik_solutions:
                 # try again without fast calculation
-                valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(tmpPos, False, False, False)
+                valid_ik_solutions = self.kinematics.get_valid_inverse_kin_solutions(self.config_trgt_pos, False, False, False, -1)
                 #print("debug get valid ik solutions again")
                 #time.sleep(0.2)
 
@@ -699,10 +699,11 @@ class Node(object):
                             msg.Theta_4,
                             msg.Theta_5]))
             self.config_thetas_bogen =  self.kinematics.offset2world(tmp)
+
+        elif self.config_processMode == status.PROCESSING_MODE_PTP_POSITION:
             self.config_trgt_pos = np.array([msg.Pos_X,
                                              msg.Pos_Y,
                                              msg.Pos_Z])
-
         #DATA
         self.data_string = msg.letters
 
