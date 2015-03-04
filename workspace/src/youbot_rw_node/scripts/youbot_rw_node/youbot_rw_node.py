@@ -270,7 +270,7 @@ class Node(object):
         #tmp = self.kinematics.offset2world(self.config_thetas_bogen)
         #print("angles: "), self.config_thetas_bogen
         if (self.kinematics.isSolutionValid(self.config_thetas_bogen)):
-            self.move_arm(self.config_thetas_bogen, True)
+            self.send_vrep_joint_targets(self.config_thetas_bogen)
             self.config_cur_pos = self.kinematics.direct_kin(self.config_thetas_bogen)
             print("pos: [%.4f; %.4f; %.4f]" % (self.config_cur_pos[0], self.config_cur_pos[1], self.config_cur_pos[2]) )
             pos_wp = self.kinematics.direct_kin_2_wristPoint(self.config_thetas_bogen)
@@ -284,7 +284,9 @@ class Node(object):
         print("== triggered lin position ==")
         tmpPos = list()
         tmpPos.append(np.array([self.config_trgt_pos[0], self.config_trgt_pos[1], self.config_trgt_pos[2]]))
+        print tmpPos
         self.process_linear_movement(tmpPos, False, True)
+
         # self.process_linear_movement_with_angles(tmpPos, True, True)
         print("== lin position movement done==")
 
@@ -302,7 +304,7 @@ class Node(object):
                 joint_pos = sync.getJointPostition()
                 for i in xrange(0, int(resolution), 1):
                     erg = joint_pos + (((angle - joint_pos) / (resolution)) * i)
-                    self.move_arm(erg, True)
+                    self.send_vrep_joint_targets(erg)
 
             self.config_cur_pos = self.kinematics.direct_kin(erg)
             self.config_thetas_bogen = erg
@@ -339,7 +341,7 @@ class Node(object):
 
                 #print("debug solutions:"),valid_ik_solutions
 
-                self.move_arm(valid_ik_solutions[0], True)
+                self.send_vrep_joint_targets(valid_ik_solutions[0])
                 self.config_cur_pos = self.kinematics.direct_kin(valid_ik_solutions[0])
                 self.config_thetas_bogen = valid_ik_solutions[0]
 
@@ -534,7 +536,7 @@ class Node(object):
         else:
             print("== using geometric kinematics ==")
             # calc step size
-            step_size = 1/self.res
+            step_size = 1./self.res
             # max_step = int(1.0/step_size)
 
             # init on current angles
@@ -549,7 +551,6 @@ class Node(object):
 
                 move_vec = np.array([i[0] - origin[0], i[1] - origin[1], i[2] - origin[2]])
                 move_length = np.sqrt(move_vec[0] ** 2 + move_vec[1] ** 2 + move_vec[2] ** 2)
-
                 step_count_int = int(move_length / step_size) + 1
                 step_count_float = move_length / step_size
                 # do nothing if distance is zero
@@ -703,7 +704,7 @@ class Node(object):
                             msg.Theta_5]))
             self.config_thetas_bogen =  self.kinematics.offset2world(tmp)
 
-        elif self.config_processMode == status.PROCESSING_MODE_PTP_POSITION:
+        elif self.config_processMode == status.PROCESSING_MODE_PTP_POSITION or self.config_processMode == status.PROCESSING_MODE_LIN_POSITION:
             self.config_trgt_pos = np.array([msg.Pos_X,
                                              msg.Pos_Y,
                                              msg.Pos_Z])
