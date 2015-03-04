@@ -7,7 +7,10 @@
 			<point x="6.0" y="0.5" z="0.0" hov2nxt="0"/> 
 			<point x="6.0" y="4.5" z="0.0" hov2nxt="1"/>
 	</A>
-        <Q>             <circle r="10.0" x="0.0" y="0.0" from="90.0" to="180.0" hov2nxt="1"/>                     
+        <Q>             <circle r="2.5" x="2.5" y="2.5" from="270.0" to="360.0" hov2nxt="0"/>          
+                        <circle r="2.5" x="2.5" y="2.5" from="0.0" to="90.0" hov2nxt="0"/>
+                        <circle r="2.5" x="7.5" y="2.5" from="90.0" to="270.0" hov2nxt="0"/>
+                        <point x="0.0" y="2.5" z="0.0" hov2nxt="0"/>
 	</Q>
 	<B> 		<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
 			<point x="0.0" y="2.5" z="0.0" hov2nxt="0"/> 
