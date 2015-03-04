@@ -186,10 +186,17 @@ class Node(object):
         @param [in] trgts <b><i><c> [vector-5]: </c></i></b> target joint angles
         @return <b><i><c> [Bool]: </c></i></b> true if change is small
         """
+        joint_angle_thresholds =    np.array([  (0.05),
+                                                (0.05),
+                                                (0.05),
+                                                (0.05),
+                                                (0.001)])# last angle, we dont care
         small = True
-        for i,j in enumerate(trgts):
-            if abs(trgts[i]-self.desired_thetas_bogen[i]) > 0.05:
+        for i,j in enumerate(trgts):# for i,j ???
+            if abs(trgts[i]-self.desired_thetas_bogen[i]) > joint_angle_thresholds[i]:
+                print("angle_diff in joint_"), i,("["),abs(trgts[i]-self.desired_thetas_bogen[i]), (" rad] "),  ("bigger than "), joint_angle_thresholds[i]
                 small=False
+                break
         return small
 
     def process_linear_angle_movement(self, trgts):
@@ -197,7 +204,7 @@ class Node(object):
         @param [in] trgts <b><i><c> [vector-5]: </c></i></b> target joint angles
         """
         print "Process linear angle movement , elbow change or singularity?"
-        res=0.005
+        res=0.01#0.005
         angle_change=trgts-self.desired_thetas_bogen
         max_change=max(abs(angle_change))
         steps=max_change/res
@@ -212,9 +219,6 @@ class Node(object):
                 self.send_vrep_joint_targets(new_joints)
 
         print "Process linear angle movement, DONE!"
-
-
-
 
 
 
@@ -544,6 +548,8 @@ class Node(object):
             last_condition = -1
             last_condition_vec = -1
 
+            current_condition_match = -1
+
             # process pointlist
             for i in point_list:
                 origin = self.config_cur_pos
@@ -557,13 +563,20 @@ class Node(object):
                 if step_count_float != 0:
 
                     # check for matching condition
+                    last_condition_match = current_condition_match
                     valid_ik_solutions_origin, valid_ik_solutions_condition_origin = self.kinematics.get_valid_inverse_kin_solutions(origin, False, limit_solution, True, -1)
                     valid_ik_solutions_i, valid_ik_solutions_condition_i = self.kinematics.get_valid_inverse_kin_solutions(i, False, limit_solution, True, -1)
                     current_condition_match = -1
                     for a in valid_ik_solutions_condition_origin:
                         if(a in valid_ik_solutions_condition_i):
-                            current_condition_match = a
-                            break
+                            if(current_condition_match == -1):
+                                current_condition_match = a
+                            if(a == last_condition_match):
+                                current_condition_match = a
+                                break
+
+                    if(current_condition_match != -1):
+                        print("condition match for current line found: "), current_condition_match
 
                     step_vec = np.array([move_vec[0] / step_count_float, move_vec[1] / step_count_float, move_vec[2] / step_count_float])
                     #print("current point: "), i
