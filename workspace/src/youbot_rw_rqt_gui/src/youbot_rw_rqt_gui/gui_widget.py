@@ -59,8 +59,8 @@ class YouBotGuiWidget(QWidget):
     
 
     def __init__(self, context):
-        """
-        :param context: plugin context hook to enable adding widgets as a ROS_GUI pane, ''PluginContext''
+        """ gui definitions
+        @param [in] context <b><i><c> [string]: </c></i></b> plugin context hook to enable adding widgets as a ROS_GUI pane, ''PluginContext'
         """
         super(YouBotGuiWidget, self).__init__()
         rp = rospkg.RosPack()
@@ -107,6 +107,10 @@ class YouBotGuiWidget(QWidget):
     
     # callbacks for ui events
     def on_key_press(self, event):
+        """ GUI Envent handler
+        @param [in] event <b><i><c> [event]: </c></i></b> Event delivered from QT-GUI
+        """
+
         key = event.key()
         #if key == Qt.Key_Space:
             
@@ -131,11 +135,14 @@ class YouBotGuiWidget(QWidget):
         
 
     def handle_close(self, event):
-        #self.shutdown_all()
-
+        """ GUI Envent handler
+        @param [in] event <b><i><c> [event]: </c></i></b> Event delivered from QT-GUI
+        """
         event.accept()
 
     def _handle_stop_clicked(self):
+        """ GUI Envent handler Stops V-REP
+        """
         msg=Empty()
         self.pub_reset.publish(msg)
         vrep_controll.TriggerSimualtion()
@@ -144,6 +151,8 @@ class YouBotGuiWidget(QWidget):
         vrep_controll.TriggerSimualtion()
 
     def _handle_reset_clicked(self):
+        """ GUI Envent handler, resets gui/node and V-REP
+        """
         msg=Empty()
         self.pub_reset.publish(msg)
         vrep_controll.TriggerSimualtion()
@@ -160,6 +169,8 @@ class YouBotGuiWidget(QWidget):
 
 
     def _handle_write_clicked(self):
+        """ GUI Envent handler, sends chosen command to node
+        """
         msg=rw_node()
         if(self.kinematic_comboBox.currentIndex() == 0):
             msg.kinematic = 0
@@ -199,7 +210,10 @@ class YouBotGuiWidget(QWidget):
         self.pub_write_cmd.publish(msg)
         
         
-    def callback_status_cmd(self,msg):                       
+    def callback_status_cmd(self,msg):
+        """ Ros Subsciber callback, applys data from node to GUI
+        @param [in] msg <b><i><c> [ros-message]: </c></i></b>
+        """
 	    #CONFIG
 	    self.status_node_status = msg.nodestatus
 	    self.status_vrep_status = msg.vrepstatus
@@ -226,7 +240,11 @@ class YouBotGuiWidget(QWidget):
                 self.pos_y_doubleSpinBox.setValue(msg.Pos_Y)
                 self.pos_z_doubleSpinBox.setValue(msg.Pos_Z)
 
+
     def _set_status_text(self, text):
+        """ Set's textlabel in gui
+        @param [in] event <b><i><c> [string]: </c></i></b> String to show
+        """
         if text:            
             self.status_label.setText(text)
         else:

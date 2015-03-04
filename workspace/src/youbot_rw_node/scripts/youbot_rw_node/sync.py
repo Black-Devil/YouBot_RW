@@ -14,6 +14,7 @@ position_geted=False
 
 def joint_callback(data):
     """ Joint callback, sets the Joint positions
+    @param [in] progress <b><i><c> [ros-message]: </c></i></b> contains Joint states from V-REP
     """
     joints[0] = data.position[9]
     joints[1] = data.position[10]
@@ -26,8 +27,8 @@ def joint_callback(data):
 
 
 def getJointPostition():
-    """ get Joint States
-    @retval <Array> with Joint positions in rad
+    """  get Joint States
+    @return <b><i><c> [vector-5]: </c></i></b> Joint states from V-REP in RAD
     """
     global position_geted
     position_geted=False
@@ -45,7 +46,7 @@ def init_sync():
 
 def wait_untel_pos(target_pos):
     """ wait until position is reached, wait for error threshold
-    @param target_pos Postion to reach
+    @param [in] target_pos <b><i><c> [vector-5]: </c></i></b> joint angles to reach in RAD
     """
     mini = 0.003
     err0 = abs(target_pos[0] - joints[0])
@@ -64,7 +65,7 @@ def wait_untel_pos(target_pos):
 
 def wait_untel_pos_eq(target_pos):
     """ wait until position is reached, wait for stable error
-    @param target_pos Postion to reach
+    @param [in] target_pos <b><i><c> [vector-5]: </c></i></b> joint angles to reach in RAD
     """
     global joints
     TriggerSimualtion()
