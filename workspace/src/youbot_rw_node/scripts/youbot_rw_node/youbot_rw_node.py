@@ -58,6 +58,7 @@ class Node(object):
         @return <b><i><c> [void]: </c></i></b> nothing
         """
         self.rate = 100
+        self.res = 1000
         self.disable = False
         self.status = 1  # 0= error 1= no error
         self.status_string = "no error"
@@ -172,9 +173,9 @@ class Node(object):
                                     (((2. * np.pi) / 360.) * trgts[3]),
                                     (((2. * np.pi) / 360.) * trgts[4])])
         if self.check_angle_movement(trgts_bogen):
-            self.send_vrep_joint_targets(trgts_bogen)
+                self.send_vrep_joint_targets(trgts_bogen)
         else:
-            self.process_linear_angle_movement(trgts_bogen)
+                self.process_linear_angle_movement(trgts_bogen)
         self.config_cur_pos = self.kinematics.direct_kin(trgts_bogen)
         self.config_thetas_bogen=trgts_bogen
 
@@ -515,7 +516,7 @@ class Node(object):
         self.config_cur_pos = self.kinematics.direct_kin(self.config_thetas_bogen)
         if self.kinematic_type == "Nummeric":
             print("== using  nummeric kinematics ==")
-            resolution = 1000
+            resolution = self.res
             erg = [0, 0, 0, 0, 0]
             for point in point_list:
                 lastPoint = self.config_cur_pos
@@ -533,7 +534,7 @@ class Node(object):
         else:
             print("== using geometric kinematics ==")
             # calc step size
-            step_size = 0.001
+            step_size = 1/self.res
             # max_step = int(1.0/step_size)
 
             # init on current angles
@@ -692,6 +693,7 @@ class Node(object):
         self.config_fontsize = int(msg.Fontsize)
         self.config_pencil_length = float(msg.PencilLength)
         self.config_processMode = int(msg.processmode)
+        self.res=msg.res
 
         if self.config_processMode == status.PROCESSING_MODE_PTP_ANGLES:
             tmp = np.deg2rad(np.array([msg.Theta_1,

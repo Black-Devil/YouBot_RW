@@ -165,6 +165,8 @@ class YouBotGuiWidget(QWidget):
             msg.kinematic = 0
         else:
             msg.kinematic = 1
+
+        msg.res=self.res_spinBox.value()
         msg.Theta_1=self.theta_1_doubleSpinBox.value()
         msg.Theta_2=self.theta_2_doubleSpinBox.value()
         msg.Theta_3=self.theta_3_doubleSpinBox.value()
