@@ -69,11 +69,11 @@ class YouBotGuiWidget(QWidget):
 
         # init gui stuff
         self.processMode_comboBox.addItem("Writing")
-        self.processMode_comboBox.addItem("Draw Logo")
+        #self.processMode_comboBox.addItem("Draw Logo")
         self.processMode_comboBox.addItem("PTP Position")
         self.processMode_comboBox.addItem("PTP Angles")
         self.processMode_comboBox.addItem("LIN Position")
-        self.processMode_comboBox.addItem("LIN Angles")
+        #self.processMode_comboBox.addItem("LIN Angles")
 
 
 
