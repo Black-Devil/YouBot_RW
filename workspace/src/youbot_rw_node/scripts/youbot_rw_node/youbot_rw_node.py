@@ -555,6 +555,16 @@ class Node(object):
                 step_count_float = move_length / step_size
                 # do nothing if distance is zero
                 if step_count_float != 0:
+
+                    # check for matching condition
+                    valid_ik_solutions_origin, valid_ik_solutions_condition_origin = self.kinematics.get_valid_inverse_kin_solutions(origin, False, limit_solution, True, -1)
+                    valid_ik_solutions_i, valid_ik_solutions_condition_i = self.kinematics.get_valid_inverse_kin_solutions(i, False, limit_solution, True, -1)
+                    current_condition_match = -1
+                    for a in valid_ik_solutions_condition_origin:
+                        if(a in valid_ik_solutions_condition_i):
+                            current_condition_match = a
+                            break
+
                     step_vec = np.array([move_vec[0] / step_count_float, move_vec[1] / step_count_float, move_vec[2] / step_count_float])
                     #print("current point: "), i
                     #print("stepcount: "), step_count_int
@@ -574,7 +584,11 @@ class Node(object):
                         #valid_ik_solutions, valid_ik_solutions_condition = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, True, limit_solution, True, -1)
                         #if not valid_ik_solutions:
                             # try again without fast calculation
-                        valid_ik_solutions, valid_ik_solutions_condition = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, False, limit_solution, True, -1)
+                        if(current_condition_match != -1):
+                            valid_ik_solutions, valid_ik_solutions_condition = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, False, limit_solution, True, current_condition_match)
+                        else:
+                            valid_ik_solutions, valid_ik_solutions_condition = self.kinematics.get_valid_inverse_kin_solutions(current_trgt, False, limit_solution, True, -1)
+
                         if not valid_ik_solutions:
                             print("Found no ik solution for point(%.4f; %.4f; %.4f). Processing goes on with next point.") % (current_trgt[0], current_trgt[1], current_trgt[2])
                         else:
