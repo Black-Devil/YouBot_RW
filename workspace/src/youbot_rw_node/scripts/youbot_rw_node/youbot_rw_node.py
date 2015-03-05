@@ -411,6 +411,9 @@ class Node(object):
                 self.process_linear_movement([dummy], True, True)
                 self.process_linear_movement([x + self.nextLetterPos for x in pointlist], True, True)
                 self.nextLetterPos[1] += ( max([x[1] for x in pointlist]) + self.between_letter_margin)
+                if(self.nextLetterPos[1] > self.line_ending_threshold):
+                    self.nextLetterPos[0] = self.nextLetterPos[0] + self.letter_height + self.between_line_margin
+                    self.nextLetterPos[1] = -self.line_ending_threshold
 
                 # # transform pointlist to current write position     # let out z coordinate
                 # max_y_of_pointlist = current_write_pos[1]
