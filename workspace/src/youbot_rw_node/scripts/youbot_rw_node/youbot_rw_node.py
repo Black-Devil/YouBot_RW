@@ -405,7 +405,7 @@ class Node(object):
                 #self.process_linear_movement(self.get_circle(1, 360, 90), True, True)
 
 
-                self.process_linear_movement([[self.nextLetterPos[0], self.nextLetterPos[1], self.hoverOffset]], True, True)
+                #self.process_linear_movement([[self.nextLetterPos[0], self.nextLetterPos[1], self.hoverOffset]], True, True)
                 dummy = pointlist[0] + self.nextLetterPos
                 dummy[2] = self.hoverOffset
                 self.process_linear_movement([dummy], True, True)
