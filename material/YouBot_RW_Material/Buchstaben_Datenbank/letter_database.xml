@@ -7,11 +7,6 @@
 			<point x="6.0" y="0.5" z="0.0" hov2nxt="0"/> 
 			<point x="6.0" y="4.5" z="0.0" hov2nxt="1"/>
 	</A>
-        <Q>             <circle r="2.5" x="2.5" y="2.5" from="270.0" to="360.0" hov2nxt="0"/>          
-                        <circle r="2.5" x="2.5" y="2.5" from="0.0" to="90.0" hov2nxt="0"/>
-                        <circle r="2.5" x="7.5" y="2.5" from="90.0" to="270.0" hov2nxt="0"/>
-                        <point x="0.0" y="2.5" z="0.0" hov2nxt="0"/>
-	</Q>
 	<B> 		<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
 			<point x="0.0" y="2.5" z="0.0" hov2nxt="0"/> 
 			<point x="1.6" y="4.8" z="0.0" hov2nxt="0"/> 
@@ -55,26 +50,88 @@
                         <point x="5.0" y="5.0" z="0.0" hov2nxt="1"/>
                         <point x="0.0" y="5.0" z="0.0" hov2nxt="1"/> 
 	</F>
-        <G> 		<point x="0.0" y="5.0" z="0.0" hov2nxt="0"/>
-                        <point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
-			<point x="10.0" y="0.0" z="0.0" hov2nxt="1"/> 
+        <G>             <circle r="2.5" x="2.5" y="2.5" from="90.0" to="0.0" hov2nxt="0"/>          
+                        <circle r="2.5" x="2.5" y="2.5" from="360.0" to="270.0" hov2nxt="0"/>
+                        <point x="7.5" y="0.0" z="0.0" hov2nxt="0"/>
+                        <circle r="2.5" x="7.5" y="2.5" from="270.0" to="90.0" hov2nxt="0"/>
+                        <point x="5.0" y="5.0" z="0.0" hov2nxt="0"/>
+                        <point x="5.0" y="2.5" z="0.0" hov2nxt="1"/>
+	</G>
+        <H> 		<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/>
+                        <point x="10.0" y="0.0" z="0.0" hov2nxt="1"/> 
+			<point x="10.0" y="5.0" z="0.0" hov2nxt="0"/> 
+                        <point x="0.0" y="5.0" z="0.0" hov2nxt="1"/>
                         <point x="5.0" y="0.0" z="0.0" hov2nxt="0"/>
                         <point x="5.0" y="5.0" z="0.0" hov2nxt="1"/>
-                        <point x="0.0" y="5.0" z="0.0" hov2nxt="1"/> 
-	</G>
-        <P> 		<point x="0.0" y="5.0" z="0.0" hov2nxt="0"/>
-                        <point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
-			<point x="10.0" y="0.0" z="0.0" hov2nxt="0"/> 
+	</H>
+        <I> 		<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/>
+                        <point x="10.0" y="0.0" z="0.0" hov2nxt="1"/>
+	</I>
+        <J> 		<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/>
+                        <point x="7.5" y="0.0" z="0.0" hov2nxt="0"/>
+                        <circle r="2.5" x="7.5" y="2.5" from="270.0" to="90.0" hov2nxt="1"/>
+	</J>
+        <K> 		<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/>
+                        <point x="10.0" y="0.0" z="0.0" hov2nxt="1"/>
                         <point x="10.0" y="5.0" z="0.0" hov2nxt="0"/>
-                        <point x="5.0" y="5.0" z="0.0" hov2nxt="0"/>
+                        <point x="5.0" y="0.0" z="0.0" hov2nxt="0"/>
                         <point x="0.0" y="5.0" z="0.0" hov2nxt="1"/>
-                        <point x="5.0" y="0.0" z="0.0" hov2nxt="1"/> 
-	</P>
+	</K>
 	<L> 		<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
 			<point x="10.0" y="0.0" z="0.0" hov2nxt="0"/> 
 			<point x="10.0" y="5.0" z="0.0" hov2nxt="1"/> 
 	</L>
-
+        <M> 		<point x="10.0" y="0.0" z="0.0" hov2nxt="0"/> 
+			<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
+			<point x="5.0" y="2.5" z="0.0" hov2nxt="0"/>
+                        <point x="0.0" y="5.0" z="0.0" hov2nxt="0"/>
+                        <point x="10.0" y="5.0" z="0.0" hov2nxt="1"/>
+	</M>
+        <N> 		<point x="10.0" y="0.0" z="0.0" hov2nxt="0"/> 
+			<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
+			<point x="10.0" y="5.0" z="0.0" hov2nxt="0"/>
+                        <point x="0.0" y="5.0" z="0.0" hov2nxt="1"/>
+	</N>
+        <O>             <circle r="2.5" x="2.5" y="2.5" from="270.0" to="360.0" hov2nxt="0"/>          
+                        <circle r="2.5" x="2.5" y="2.5" from="0.0" to="90.0" hov2nxt="0"/>
+                        <circle r="2.5" x="7.5" y="2.5" from="90.0" to="270.0" hov2nxt="0"/>
+                        <point x="2.5" y="0.0" z="0.0" hov2nxt="1"/>
+	</O>
+        <P> 		<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/>
+                        <circle r="2.5" x="2.5" y="2.5" from="0.0" to="180.0" hov2nxt="0"/>
+                        <point x="5.0" y="0.0" z="0.0" hov2nxt="1"/>
+                        <point x="0.0" y="0.0" z="0.0" hov2nxt="0"/>
+                        <point x="10.0" y="0.0" z="0.0" hov2nxt="1"/> 
+	</P>
+        <Q>             <circle r="2.5" x="2.5" y="2.5" from="270.0" to="360.0" hov2nxt="0"/>          
+                        <circle r="2.5" x="2.5" y="2.5" from="0.0" to="90.0" hov2nxt="0"/>
+                        <circle r="2.5" x="7.5" y="2.5" from="90.0" to="270.0" hov2nxt="0"/>
+                        <point x="2.5" y="0.0" z="0.0" hov2nxt="1"/>
+                        <point x="9.0" y="4.0" z="0.0" hov2nxt="0"/>
+                        <point x="10.0" y="5.0" z="0.0" hov2nxt="1"/>
+	</Q>
+        <R>             <point x="0.0" y="0.0" z="0.0" hov2nxt="0"/>
+                        <point x="0.0" y="2.5" z="0.0" hov2nxt="0"/>
+                        <circle r="2.5" x="2.5" y="2.5" from="0.0" to="180.0" hov2nxt="0"/>          
+                        <point x="5.0" y="0.0" z="0.0" hov2nxt="0"/>
+                        <point x="10.0" y="5.0" z="0.0" hov2nxt="1"/>
+                        <point x="10.0" y="0.0" z="0.0" hov2nxt="0"/>
+                        <point x="0.0" y="0.0" z="0.0" hov2nxt="1"/>
+	</R>
+        <S> 		<circle r="2.5" x="2.5" y="2.5" from="75.0" to="0.0" hov2nxt="0"/>
+                        <circle r="2.5" x="2.5" y="2.5" from="360.0" to="180.0" hov2nxt="0"/>
+                        <circle r="2.5" x="7.5" y="2.5" from="0.0" to="255.0" hov2nxt="1"/>
+	</S>
+	<T> 		<point x="10.0" y="2.5" z="0.0" hov2nxt="0"/> 
+			<point x="0.0" y="2.5" z="0.0" hov2nxt="1"/> 
+			<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
+                        <point x="0.0" y="5.0" z="0.0" hov2nxt="1"/> 
+	</T>
+        <U>             <point x="0.0" y="0.0" z="0.0" hov2nxt="0"/>
+                        <point x="7.5" y="0.0" z="0.0" hov2nxt="0"/> 
+                        <circle r="2.5" x="7.5" y="2.5" from="270.0" to="90.0" hov2nxt="0"/>
+                        <point x="0.0" y="5.0" z="0.0" hov2nxt="1"/>
+	</U>
 	<V> 		<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
 			<point x="10.0" y="2.5" z="0.0" hov2nxt="0"/> 
 			<point x="0.0" y="5.0" z="0.0" hov2nxt="1"/> 
@@ -85,6 +142,22 @@
 			<point x="10.0" y="3.75" z="0.0" hov2nxt="0"/> 
 			<point x="0.0" y="5.0" z="0.0" hov2nxt="1"/> 
 	</W>
+	<X> 		<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
+			<point x="10.0" y="5.0" z="0.0" hov2nxt="1"/> 
+			<point x="10.0" y="0.0" z="0.0" hov2nxt="0"/>
+                        <point x="0.0" y="5.0" z="0.0" hov2nxt="1"/>
+	</X>
+        <Y> 		<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
+			<point x="5.0" y="2.5" z="0.0" hov2nxt="0"/> 
+			<point x="10.0" y="2.5" z="0.0" hov2nxt="1"/>
+                        <point x="5.0" y="2.5" z="0.0" hov2nxt="0"/>
+                        <point x="0.0" y="5.0" z="0.0" hov2nxt="1"/>
+	</Y>
+        <Z> 		<point x="0.0" y="0.0" z="0.0" hov2nxt="0"/> 
+			<point x="0.0" y="5.0" z="0.0" hov2nxt="0"/> 
+			<point x="10.0" y="0.0" z="0.0" hov2nxt="0"/>
+                        <point x="10.0" y="5.0" z="0.0" hov2nxt="1"/>
+	</Z>
 	<NOT_IMPL> 	<point x="2.0" y="2.0" z="0.0" hov2nxt="0"/> 
 			<point x="8.0" y="2.0" z="0.0" hov2nxt="0"/> 
 			<point x="8.0" y="8.0" z="0.0" hov2nxt="0"/> 

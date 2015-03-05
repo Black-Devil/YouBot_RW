@@ -529,9 +529,10 @@ class Node(object):
                 print("lin_move from: "), np.round(lastPoint, 3), (" to: "), np.round(point, 3)
                 steps = math.sqrt(sum(i * i for i in point - lastPoint))
                 for i in xrange(0, int(resolution * steps)+1):
-                    dummy = lastPoint + ((point - lastPoint) / (resolution * steps)) * i
-                    erg = self.kin_num.step_to_point(dummy)
-                    self.move_arm(erg, True)
+                    if steps != 0:
+                        dummy = lastPoint + ((point - lastPoint) / (resolution * steps)) * i
+                        erg = self.kin_num.step_to_point(dummy)
+                        self.move_arm(erg, True)
                 self.config_cur_pos = np.array(point)
                 self.config_thetas_bogen = erg
 
